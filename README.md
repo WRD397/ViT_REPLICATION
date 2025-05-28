@@ -1,4 +1,4 @@
-## About
+### About
 
 This project is a structured replication of the Vision Transformer (ViT) architecture introduced by Google Research in the paper:  
 **"An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"**   
@@ -7,6 +7,7 @@ This project is a structured replication of the Vision Transformer (ViT) archite
 
 ---
 
+### Goal
 The goal is to:
 - Reproduce the model architecture and results on CIFAR-10 and TinyImageNet
 - Validate core claims (e.g., performance vs CNNs)
