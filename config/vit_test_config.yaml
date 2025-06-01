@@ -1,0 +1,20 @@
+root:
+  path: '/home/wd/Documents/work_stuff/ViT_REPLICATION'
+
+data:
+  dataset: 'CIFAR10'
+  data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR10'
+  batch_size: 64
+  num_workers: 4
+  img_size: 32
+
+model:
+  img_size: 32 # should be same as img_size mentioned in data section
+  patch_size: 4
+  in_channels: 3
+  emb_size: 128
+  depth: 4
+  num_heads: 4
+  mlp_ratio: 4.0
+  num_classes: 10
+  dropout: 0.1
