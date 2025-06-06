@@ -50,7 +50,9 @@ pure_eval==0.2.3
 Pygments==2.19.1
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
 pytz==2025.2
+PyYAML==6.0.2
 pyzmq==26.4.0
 seaborn==0.13.2
 six==1.17.0
@@ -59,6 +61,7 @@ sympy==1.14.0
 torch==2.7.0
 torchvision==0.22.0
 tornado==6.5.1
+tqdm==4.67.1
 traitlets==5.14.3
 triton==3.3.0
 typing_extensions==4.13.2
