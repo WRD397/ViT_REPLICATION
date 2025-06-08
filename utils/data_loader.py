@@ -1,7 +1,19 @@
+import sys
+import os
+from dotenv import load_dotenv
+load_dotenv()
+ROOT_DIR_PATH = os.environ.get('ROOT_PATH')
+sys.path.append(os.path.abspath(ROOT_DIR_PATH))  # Adds root directory to sys.path
+
 import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+from utils.config_loader import load_config
+
+# loading config file for CIFAR10
+config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
+data_cfg = config["data"]
 
 class DatasetLoader:
     def __init__(self, dataset_name, data_dir,
@@ -19,9 +31,25 @@ class DatasetLoader:
             else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-    def get_dataset(self, train=True):
+    def get_dataset(self, train=True, transform=None):
         if self.dataset_name == 'CIFAR10':
-            return datasets.CIFAR10(root=self.data_dir, train=train, download=True, transform=self.transform)
+            #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
+            # CIFAR-10 mean & std
+            mean_cifar10 = data_cfg['mean_aug']
+            std_cifar10  = data_cfg['std_aug']
+            train_transform_cifar10 = transforms.Compose([
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(mean_cifar10, std_cifar10)
+            ])
+            val_transform_cifar10 = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean_cifar10, std_cifar10)
+            ])
+            transform_cifar10 = train_transform_cifar10 if train else val_transform_cifar10
+            return datasets.CIFAR10(root=self.data_dir, train=train, download=True, transform=transform_cifar10)
         elif self.dataset_name == 'CIFAR100':
             return datasets.CIFAR100(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'MNIST':
@@ -44,15 +72,7 @@ class DatasetLoader:
 
 
 if __name__ == "__main__":
-    import sys
-    import os
-    from utils.config_loader import load_config
-    CURR_PATH = f'/home/wd/Documents/work_stuff/ViT_REPLICATION'
-    sys.path.append(os.path.abspath(CURR_PATH))  # Adds root directory to sys.path
-
-    # loading config file for CIFAR10
-    config = load_config(f"{CURR_PATH}/config/vit_test_config.yaml")
-    data_cfg = config["data"]
+    
     DATASET = data_cfg["dataset"]
     DATA_DIR = data_cfg["data_path"]
     BATCH = data_cfg["batch_size"]
