@@ -2,27 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# config numbers
-# class ViTConfig:
-#     def __init__(self,
-#                  img_size=32,
-#                  patch_size=4,
-#                  in_channels=3,
-#                  emb_size=64,
-#                  depth=6,
-#                  num_heads=4,
-#                  mlp_ratio=4.0,
-#                  num_classes=10,
-#                  dropout=0.1):
-#         self.img_size = img_size
-#         self.patch_size = patch_size
-#         self.in_channels = in_channels
-#         self.emb_size = emb_size
-#         self.depth = depth
-#         self.num_heads = num_heads
-#         self.mlp_ratio = mlp_ratio
-#         self.num_classes = num_classes
-#         self.dropout = dropout
 
 # Patch Embedding
 class PatchEmbedding(nn.Module):
@@ -38,7 +17,7 @@ class PatchEmbedding(nn.Module):
         x = x.transpose(1, 2)         # (B, N, emb_size)
         return x                      # Shape: (B, N, E)
 
-# Transformer Encoder Block
+# Transformer Encoder Block - replicating the original Paper (Vaswani, 2017)
 class TransformerEncoderBlock(nn.Module):
     def __init__(self, emb_size, num_heads, mlp_ratio, dropout):
         super().__init__()
