@@ -4,18 +4,64 @@ data:
   batch_size: 64
   num_workers: 4
   img_size: 32
+  mean_aug: [0.4914, 0.4822, 0.4465]
+  std_aug: [0.2023, 0.1994, 0.2010]
 
 model:
   name: 'vit_test'
   img_size: 32 # should be same as img_size mentioned in data section
   patch_size: 4
   in_channels: 3
-  emb_size: 128
-  depth: 6
-  num_heads: 4
-  mlp_ratio: 4.0
+  emb_size: 200 # 768 in original paper
+  depth: 10 # 12 in original paper
+  num_heads: 10 # 12 in original paper 
+  mlp_ratio: 3.0 # orignial paper 4.0
   num_classes: 10
-  dropout: 0.1
+  dropout: 0.3
+
+## Original Paper Configs
+### --- VIT BASE B16 - Params86M
+# vit_base_config = {
+#     "model": {
+#         "in_channels": 3,
+#         "img_size": 224,
+#         "patch_size": 16,
+#         "num_classes": 1000,
+#         "emb_size": 768,
+#         "depth": 12,
+#         "num_heads": 12,
+#         "mlp_ratio": 4.0,
+#         "dropout": 0.1
+#     }
+# }
+### --- VIT BASE L16 - Params307M
+# vit_large_config = {
+#     "model": {
+#         "in_channels": 3,
+#         "img_size": 224,
+#         "patch_size": 16,
+#         "num_classes": 1000,
+#         "emb_size": 1024,
+#         "depth": 24,
+#         "num_heads": 16,
+#         "mlp_ratio": 4.0,
+#         "dropout": 0.1
+#     }
+# }
+### --- VIT BASE H16 - Params632M
+# vit_huge_config = {
+#     "model": {
+#         "in_channels": 3,
+#         "img_size": 224,
+#         "patch_size": 14,
+#         "num_classes": 1000,
+#         "emb_size": 1280,
+#         "depth": 32,
+#         "num_heads": 16,
+#         "mlp_ratio": 4.0,
+#         "dropout": 0.1
+#     }
+# }
 
 train:
   epochs: 30
