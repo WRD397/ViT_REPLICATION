@@ -12,7 +12,8 @@ import torchvision.datasets as datasets
 from utils.config_loader import load_config
 
 # loading config file for CIFAR10
-config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
+#config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
+config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
 data_cfg = config["data"]
 
 class DatasetLoader:
@@ -72,12 +73,14 @@ class DatasetLoader:
 
 
 if __name__ == "__main__":
-    
-    DATASET = data_cfg["dataset"]
-    DATA_DIR = data_cfg["data_path"]
-    BATCH = data_cfg["batch_size"]
-    NUM_WORKERS = data_cfg["num_workers"]
-    IMAGE = data_cfg["img_size"]
+    # sample code
+    # loading cifar100
+    cifar100_config = data_cfg['CIFAR100']
+    DATASET = cifar100_config["dataset"]
+    DATA_DIR = cifar100_config["data_path"]
+    BATCH = cifar100_config["batch_size"]
+    NUM_WORKERS = cifar100_config["num_workers"]
+    IMAGE = cifar100_config["img_size"]
 
     # loading data
     loader = DatasetLoader(dataset_name=DATASET,
