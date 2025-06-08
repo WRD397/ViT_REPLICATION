@@ -26,5 +26,5 @@ model:
     mlp_ratio: 3.0 # orignial paper 4.0
     num_classes: 100
     dropout: 0.2
-    epochs: 30
+    epochs: 80
     lr: 0.0005
