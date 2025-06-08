@@ -11,7 +11,7 @@ data:
     dataset : 'CIFAR100'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
     batch_size: 64
-    num_workers: 4
+    num_workers: 2
     img_size: 32
 
 model:
