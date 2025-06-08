@@ -21,6 +21,7 @@ from pynvml import (
     nvmlDeviceGetMemoryInfo,
     nvmlDeviceGetUtilizationRates
 )
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
@@ -145,8 +146,9 @@ def main():
     print(f"Total Trainable Parameters: {total_params:,} ({total_params / 1e6:.2f}M)")
 
     # Loss and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
     best_val_acc = 0.0
     best_model_state = None
@@ -167,7 +169,8 @@ def main():
 
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = validate(model, val_loader, criterion, device)
-
+        scheduler.step()
+        
         # Monitor GPU usage
         mem_info = nvmlDeviceGetMemoryInfo(handle)
         util_info = nvmlDeviceGetUtilizationRates(handle)
