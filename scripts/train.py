@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from model.vit import VisionTransformerTest
+from model.vit import VisionTransformerSmall
 from utils.model_io import save_model
 from utils.config_loader import load_config
 from utils.data_loader import DatasetLoader
@@ -97,7 +97,7 @@ def validate(model, loader, criterion, device):
 
 def main():
     # Load config
-    config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
+    config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
 
     # Device setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -105,15 +105,16 @@ def main():
 
     # Data loaders
     print('loading training testing data')
-    # loading config file for CIFAR10
-    data_cfg = config["data"]
-    DATASET = data_cfg["dataset"]
-    DATA_DIR = data_cfg["data_path"]
-    BATCH = data_cfg["batch_size"]
-    NUM_WORKERS = data_cfg["num_workers"]
-    IMAGE = data_cfg["img_size"]
+    # loading cifar100
+    cifar100_config = config["data"]['CIFAR100']
+    DATASET = cifar100_config["dataset"]
+    DATA_DIR = cifar100_config["data_path"]
+    BATCH = cifar100_config["batch_size"]
+    NUM_WORKERS = cifar100_config["num_workers"]
+    IMAGE = cifar100_config["img_size"]
 
     # loading data
+    print(f'loading dataset : {DATASET}')
     loader = DatasetLoader(dataset_name=DATASET,
                             data_dir=DATA_DIR,
                             batch_size=BATCH,
@@ -127,12 +128,17 @@ def main():
         break
 
     # Model
-    modelName = config["model"]["name"]
-    model = VisionTransformerTest(config).to(device)
+    modelConfig = config["model"]
+    vitSmall_config = modelConfig['VIT_SMALL']
+    MODEL_NAME = vitSmall_config["name"]
+    LEARNING_RATE = vitSmall_config['lr']
+    EPOCHS = vitSmall_config['epochs']
+
+    model = VisionTransformerSmall(config).to(device)
     
     # printing model config
     print("Model Configuration:")
-    for k, v in config['model'].items():
+    for k, v in vitSmall_config.items():
         print(f"  {k}: {v}")
     # Count and print model parameters
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -140,7 +146,7 @@ def main():
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=config["train"]["lr"])
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     best_val_acc = 0.0
     best_model_state = None
@@ -156,8 +162,8 @@ def main():
     gpu_name = nvmlDeviceGetName(handle)
 
     startTime = time.time()
-    for epoch in range(config["train"]["epochs"]):
-        print(f"\nEpoch {epoch+1}/{config['train']['epochs']}")
+    for epoch in range(EPOCHS):
+        print(f"\nEpoch {epoch+1}/{EPOCHS}")
 
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = validate(model, val_loader, criterion, device)
