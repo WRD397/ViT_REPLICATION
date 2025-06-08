@@ -15,6 +15,13 @@ from model.vit import VisionTransformerTest
 from utils.model_io import save_model
 from utils.config_loader import load_config
 from utils.data_loader import DatasetLoader
+from pynvml import (
+    nvmlInit, nvmlDeviceGetName, nvmlShutdown,
+    nvmlDeviceGetHandleByIndex,
+    nvmlDeviceGetMemoryInfo,
+    nvmlDeviceGetUtilizationRates
+)
+
 
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
@@ -122,6 +129,14 @@ def main():
     # Model
     modelName = config["model"]["name"]
     model = VisionTransformerTest(config).to(device)
+    
+    # printing model config
+    print("Model Configuration:")
+    for k, v in config['model'].items():
+        print(f"  {k}: {v}")
+    # Count and print model parameters
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Total Trainable Parameters: {total_params:,} ({total_params / 1e6:.2f}M)")
 
     # Loss and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -130,28 +145,58 @@ def main():
     best_val_acc = 0.0
     best_model_state = None
     
+    # gpu utilization
+    max_mem_used = 0
+    max_gpu_util = 0
+    max_mem_util = 0
+
     # Training loop
+    nvmlInit()
+    handle = nvmlDeviceGetHandleByIndex(0)
+    gpu_name = nvmlDeviceGetName(handle)
+
     startTime = time.time()
     for epoch in range(config["train"]["epochs"]):
         print(f"\nEpoch {epoch+1}/{config['train']['epochs']}")
 
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc = validate(model, val_loader, criterion, device)
+
+        # Monitor GPU usage
+        mem_info = nvmlDeviceGetMemoryInfo(handle)
+        util_info = nvmlDeviceGetUtilizationRates(handle)
+        mem_used_mb = mem_info.used / (1024 ** 2)
+        max_mem_used = max(max_mem_used, mem_used_mb)
+        max_gpu_util = max(max_gpu_util, util_info.gpu)
+        max_mem_util = max(max_mem_util, util_info.memory)
+
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_val_loss = val_loss
+            corresponding_train_acc = train_acc
+            corresponding_train_loss = train_loss
             best_model_state = model.state_dict()
-
+    
+  
     endTime = time.time()
     elapsedTime = endTime - startTime
     # Convert seconds to h:m:s
     hours = int(elapsedTime // 3600)
     minutes = int((elapsedTime % 3600) // 60)
     seconds = int(elapsedTime % 60)
-
-    print(f"Train     Loss: {train_loss:.4f},    Accuracy: {train_acc:.2f}%")
+    
+    # Shutdown 
+    nvmlShutdown()
+    
+    print('\n====== Model Performance =======')
+    print(f"Train     Loss: {corresponding_train_loss:.4f},    Accuracy: {corresponding_train_acc:.2f}%")
     print(f"Val(Best) Loss: {best_val_loss:.4f}, Accuracy: {best_val_acc:.2f}%")
-    print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s")
+    print('====== Hardware Performance =======')
+    print(f"GPU Used : {gpu_name}")
+    print(f"Peak GPU Memory: {max_mem_used:.2f} MB")
+    print(f"Peak GPU Utilization: {max_gpu_util}%")
+    print(f"Peak Memory Bandwidth Utilization: {max_mem_util}%\n")
+    print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s\n\n")
 
     # # Save model
     # save_model(model_state=best_model_state, model_name=modelName, epoch=epoch, val_acc=best_val_acc)
