@@ -1,0 +1,30 @@
+data:
+  CIFAR10:
+    dataset : 'CIFAR10'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR10'
+    batch_size: 64
+    num_workers: 4
+    img_size: 32
+    mean_aug: [0.4914, 0.4822, 0.4465]
+    std_aug: [0.2023, 0.1994, 0.2010]
+  CIFAR100:
+    dataset : 'CIFAR100'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
+    batch_size: 64
+    num_workers: 4
+    img_size: 32
+
+model:
+  VIT_SMALL:
+    name: 'vit_small'
+    img_size: 32 # should be same as img_size mentioned in data section
+    patch_size: 4
+    in_channels: 3
+    emb_size: 128 # 768 in original paper
+    depth: 6 # 12 in original paper
+    num_heads: 4 # 12 in original paper 
+    mlp_ratio: 3.0 # orignial paper 4.0
+    num_classes: 100
+    dropout: 0.2
+    epochs: 30
+    lr: 0.0005
