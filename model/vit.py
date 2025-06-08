@@ -85,3 +85,53 @@ class VisionTransformerTest(nn.Module):
         x = self.encoder(x)
         cls_out = self.norm(x[:, 0])
         return self.head(cls_out)
+
+
+# Vit Small Model
+class VisionTransformerSmall(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        cfg = config["model"]['VIT_SMALL']
+        
+        self.CHANNEL = cfg["in_channels"]
+        self.PATCH = cfg["patch_size"]
+        self.EMBEDDING = cfg["emb_size"]
+        self.IMAGE = cfg["img_size"]
+        self.NUM_HEADS = cfg["num_heads"]
+        self.MLP_RATIO = cfg["mlp_ratio"]
+        self.DROPOUT = cfg["dropout"]
+        self.NUM_CLASS = cfg["num_classes"]
+        self.DEPTH = cfg["depth"]
+
+        self.patch_embed = PatchEmbedding(
+            in_channels=self.CHANNEL,
+            patch_size=self.PATCH,
+            emb_size=self.EMBEDDING,
+            img_size=self.IMAGE
+        )
+
+        self.n_patches = (self.IMAGE// self.PATCH) ** 2
+        self.cls_token = nn.Parameter(torch.randn(1, 1, self.EMBEDDING))
+        self.pos_embedding = nn.Parameter(torch.randn(1, self.n_patches + 1, self.EMBEDDING))
+
+        self.encoder = nn.Sequential(*[
+            TransformerEncoderBlock(
+                emb_size=self.EMBEDDING,
+                num_heads=self.NUM_HEADS,
+                mlp_ratio=self.MLP_RATIO,
+                dropout=self.DROPOUT
+            ) for _ in range(self.DEPTH)
+        ])
+
+        self.norm = nn.LayerNorm(self.EMBEDDING)
+        self.head = nn.Linear(self.EMBEDDING, self.NUM_CLASS)
+
+    def forward(self, x):
+        B = x.size(0)
+        x = self.patch_embed(x)
+        cls_tokens = self.cls_token.expand(B, -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+        x = x + self.pos_embedding[:, :x.size(1), :]
+        x = self.encoder(x)
+        cls_out = self.norm(x[:, 0])
+        return self.head(cls_out)
