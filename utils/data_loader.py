@@ -84,9 +84,9 @@ class DatasetLoader:
         test_dataset = self.get_dataset(train=False)
 
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
-                                  shuffle=True, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers))
+                                  shuffle=True, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size,
-                                 shuffle=False, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers))
+                                 shuffle=False, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
 
         return train_loader, test_loader
 
