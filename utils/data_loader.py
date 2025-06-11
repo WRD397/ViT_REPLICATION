@@ -36,23 +36,42 @@ class DatasetLoader:
         if self.dataset_name == 'CIFAR10':
             #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
             # CIFAR-10 mean & std
-            mean_cifar10 = data_cfg['mean_aug']
-            std_cifar10  = data_cfg['std_aug']
+            cifar10_cfg = data_cfg['CIFAR10']
+            mean_cifar10 = cifar10_cfg['mean_aug']
+            std_cifar10  = cifar10_cfg['std_aug']  
+            img_size = self.img_size
             train_transform_cifar10 = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
+                transforms.RandomCrop(img_size, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar10, std_cifar10)
             ])
             val_transform_cifar10 = transforms.Compose([
+                transforms.Resize((img_size, img_size)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar10, std_cifar10)
             ])
             transform_cifar10 = train_transform_cifar10 if train else val_transform_cifar10
             return datasets.CIFAR10(root=self.data_dir, train=train, download=True, transform=transform_cifar10)
         elif self.dataset_name == 'CIFAR100':
-            return datasets.CIFAR100(root=self.data_dir, train=train, download=True, transform=self.transform)
+            cifar100_cfg = data_cfg['CIFAR100']
+            mean_cifar100 = cifar100_cfg['mean_aug']
+            std_cifar100  = cifar100_cfg['std_aug']
+            img_size = self.img_size
+            train_transform_cifar100 = transforms.Compose([
+                transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(mean_cifar100, std_cifar100)
+            ])
+            val_transform_cifar100 = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean_cifar100, std_cifar100)
+            ])
+            transform_cifar100 = train_transform_cifar100 if train else val_transform_cifar100
+            return datasets.CIFAR100(root=self.data_dir, train=train, download=True, transform=transform_cifar100)
         elif self.dataset_name == 'MNIST':
             return datasets.MNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'FASHIONMNIST':
