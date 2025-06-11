@@ -10,8 +10,8 @@ data:
   CIFAR100:
     dataset : 'CIFAR100'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
-    batch_size: 64
-    num_workers: 2
+    batch_size: 128
+    num_workers: 8
     img_size: 32
     mean_aug: [0.5071, 0.4867, 0.4408]
     std_aug: [0.2675, 0.2565, 0.2761]
