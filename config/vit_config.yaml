@@ -38,7 +38,7 @@ model:
   VIT_SMALL:
     name: 'vit_small'
     img_size: 32 # should be same as img_size mentioned in data section
-    patch_size: 4
+    patch_size: 8
     in_channels: 3
     emb_size: 384 # 768 in original paper
     depth: 8 # 12 in original paper
@@ -60,7 +60,7 @@ training:
   scheduler_warmup : true
   warmup_steps : 5
   label_smoothing_enabled : true
-  label_smoothing : 0.1 # increase to reduce overfitting
+  label_smoothing : 0.05 # increase to reduce overfitting
 
 
 # CIFAR-100 has 100 classes, so:
