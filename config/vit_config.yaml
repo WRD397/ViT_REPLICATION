@@ -13,6 +13,26 @@ data:
     batch_size: 64
     num_workers: 2
     img_size: 32
+    mean_aug: [0.5071, 0.4867, 0.4408]
+    std_aug: [0.2675, 0.2565, 0.2761]
+
+### code snippet for calculating the mean/std deviation from the dataset.
+# from torchvision import datasets, transforms
+# from torch.utils.data import DataLoader
+# import torch
+
+# dataset = datasets.CIFAR100(
+#     root='./data', train=True, download=True,
+#     transform=transforms.ToTensor())
+
+# loader = DataLoader(dataset, batch_size=50000, shuffle=False)
+# data = next(iter(loader))[0]
+
+# mean = data.mean(dim=(0, 2, 3))
+# std = data.std(dim=(0, 2, 3))
+
+# print("Mean:", mean)
+# print("Std:", std)
 
 model:
   VIT_SMALL:
@@ -20,11 +40,31 @@ model:
     img_size: 32 # should be same as img_size mentioned in data section
     patch_size: 4
     in_channels: 3
-    emb_size: 128 # 768 in original paper
-    depth: 4 # 12 in original paper
-    num_heads: 2 # 12 in original paper 
-    mlp_ratio: 2.0 # orignial paper 4.0
+    emb_size: 300 # 768 in original paper
+    depth: 6 # 12 in original paper
+    num_heads: 6 # 12 in original paper 
+    mlp_ratio: 3.0 # orignial paper 4.0
     num_classes: 100
-    dropout: 0.4
-    epochs: 50
-    lr: 0.001
+    dropout: 0.2
+
+training:
+  mixup:
+    enabled: false
+    mixup_alpha: 0.2
+    cutmix_alpha: 0.1
+    label_smoothing_mixup: 0.1
+  epochs: 80
+  lr: 0.001
+  weight_decay: 0.005 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  scheduler : false
+  scheduler_warmup : true
+  warmup_steps : 5
+  label_smoothing_enabled : true
+  label_smoothing : 0.1 # increase to reduce overfitting
+
+
+# CIFAR-100 has 100 classes, so:
+# Random guessing gives ~1% accuracy.
+# Just repeating a single class gets you ~1%.
+# A shallow CNN should hit 25–35% in <20 epochs.
+# A small ViT should get at least 15–30% accuracy by epoch 20 with reasonable hyperparameters.
