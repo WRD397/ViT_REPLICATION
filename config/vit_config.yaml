@@ -40,9 +40,9 @@ model:
     img_size: 32 # should be same as img_size mentioned in data section
     patch_size: 4
     in_channels: 3
-    emb_size: 300 # 768 in original paper
-    depth: 6 # 12 in original paper
-    num_heads: 6 # 12 in original paper 
+    emb_size: 384 # 768 in original paper
+    depth: 8 # 12 in original paper
+    num_heads: 8 # 12 in original paper 
     mlp_ratio: 3.0 # orignial paper 4.0
     num_classes: 100
     dropout: 0.2
