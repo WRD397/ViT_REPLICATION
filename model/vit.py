@@ -89,19 +89,20 @@ class VisionTransformerTest(nn.Module):
 
 # Vit Small Model
 class VisionTransformerSmall(nn.Module):
-    def __init__(self, config):
+    def __init__(self, 
+                 CHANNEL, PATCH, EMBEDDING, IMAGE, NUM_HEADS, MLP_RATIO, DROPOUT, NUM_CLASSES, DEPTH
+                 ):
         super().__init__()
-        cfg = config["model"]['VIT_SMALL']
         
-        self.CHANNEL = cfg["in_channels"]
-        self.PATCH = cfg["patch_size"]
-        self.EMBEDDING = cfg["emb_size"]
-        self.IMAGE = cfg["img_size"]
-        self.NUM_HEADS = cfg["num_heads"]
-        self.MLP_RATIO = cfg["mlp_ratio"]
-        self.DROPOUT = cfg["dropout"]
-        self.NUM_CLASS = cfg["num_classes"]
-        self.DEPTH = cfg["depth"]
+        self.CHANNEL = CHANNEL
+        self.PATCH = PATCH
+        self.EMBEDDING = EMBEDDING
+        self.IMAGE = IMAGE
+        self.NUM_HEADS = NUM_HEADS
+        self.MLP_RATIO = MLP_RATIO
+        self.DROPOUT = DROPOUT
+        self.NUM_CLASS = NUM_CLASSES
+        self.DEPTH = DEPTH
 
         self.patch_embed = PatchEmbedding(
             in_channels=self.CHANNEL,
