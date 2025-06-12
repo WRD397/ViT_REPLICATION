@@ -49,14 +49,13 @@ model:
   VIT_SMALL:
     name: 'vit_small'
     img_size: 32 # should be same as img_size mentioned in data section
-    patch_size: 8
+    patch_size: 4
     in_channels: 3
     emb_size: 512 # 768 in original paper
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper 
     mlp_ratio: 3.0 # orignial paper 4.0
-    num_classes: 10
-    dropout: 0.2
+    dropout: 0.3
 
 training:
   mixup:
@@ -65,13 +64,13 @@ training:
     cutmix_alpha: 0.1
     label_smoothing_mixup: 0.1
   epochs: 200
-  lr: 0.001
+  lr: 0.01
   weight_decay: 0.005 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 5
   label_smoothing_enabled : true
-  label_smoothing : 0.05 # increase to reduce overfitting
+  label_smoothing : 0.1 # increase to reduce overfitting
 
 
 # CIFAR-100 has 100 classes, so:
