@@ -3,8 +3,8 @@ data:
     dataset : 'CIFAR10'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR10'
     channels: 3
-    batch_size: 64
-    num_workers: 4
+    batch_size: 128
+    num_workers: 8
     img_size: 32
     mean_aug: [0.4914, 0.4822, 0.4465]
     std_aug: [0.2023, 0.1994, 0.2010]
@@ -30,24 +30,6 @@ data:
     std_aug: [0.2302, 0.2265, 0.2262]
     num_classes: 200
 
-### code snippet for calculating the mean/std deviation from the dataset.
-# from torchvision import datasets, transforms
-# from torch.utils.data import DataLoader
-# import torch
-
-# dataset = datasets.CIFAR100(
-#     root='./data', train=True, download=True,
-#     transform=transforms.ToTensor())
-
-# loader = DataLoader(dataset, batch_size=50000, shuffle=False)
-# data = next(iter(loader))[0]
-
-# mean = data.mean(dim=(0, 2, 3))
-# std = data.std(dim=(0, 2, 3))
-
-# print("Mean:", mean)
-# print("Std:", std)
-
 model:
   VIT_SMALL:
     name: 'vit_small'
@@ -65,7 +47,7 @@ training:
     cutmix_alpha: 0.1
     label_smoothing_mixup: 0.1
   epochs: 200
-  lr: 0.01
+  lr: 0.0003
   weight_decay: 0.005 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
@@ -73,6 +55,27 @@ training:
   label_smoothing_enabled : true
   label_smoothing : 0.1 # increase to reduce overfitting
 
+
+
+## ********* RESOURCES ***********
+
+### code snippet for calculating the mean/std deviation from the dataset.
+# from torchvision import datasets, transforms
+# from torch.utils.data import DataLoader
+# import torch
+
+# dataset = datasets.CIFAR100(
+#     root='./data', train=True, download=True,
+#     transform=transforms.ToTensor())
+
+# loader = DataLoader(dataset, batch_size=50000, shuffle=False)
+# data = next(iter(loader))[0]
+
+# mean = data.mean(dim=(0, 2, 3))
+# std = data.std(dim=(0, 2, 3))
+
+# print("Mean:", mean)
+# print("Std:", std)
 
 # CIFAR-100 has 100 classes, so:
 # Random guessing gives ~1% accuracy.
