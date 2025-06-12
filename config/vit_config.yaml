@@ -7,6 +7,7 @@ data:
     img_size: 32
     mean_aug: [0.4914, 0.4822, 0.4465]
     std_aug: [0.2023, 0.1994, 0.2010]
+    num_classes: 10
   CIFAR100:
     dataset : 'CIFAR100'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
@@ -15,6 +16,7 @@ data:
     img_size: 32
     mean_aug: [0.5071, 0.4867, 0.4408]
     std_aug: [0.2675, 0.2565, 0.2761]
+    num_classes: 100
   TINYIMAGENET:
     dataset : 'TINYIMAGENET'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
@@ -23,6 +25,7 @@ data:
     img_size: 64
     mean_aug: [0.4802, 0.4481, 0.3975]
     std_aug: [0.2302, 0.2265, 0.2262]
+    num_classes: 200
 
 ### code snippet for calculating the mean/std deviation from the dataset.
 # from torchvision import datasets, transforms
@@ -52,7 +55,7 @@ model:
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper 
     mlp_ratio: 3.0 # orignial paper 4.0
-    num_classes: 100
+    num_classes: 10
     dropout: 0.2
 
 training:
