@@ -141,12 +141,24 @@ def main():
     NUM_WORKERS = dataset_config["num_workers"]
     IMAGE = dataset_config["img_size"]
     NUM_CLASSES = dataset_config["num_classes"]
-
+    CHANNELS = dataset_config["channels"]
+    
     # Model
     modelConfig = config["model"]
-    vitSmall_config = modelConfig['VIT_SMALL']
-    MODEL_NAME = vitSmall_config["name"]
-    
+    specific_config = modelConfig['VIT_SMALL']
+    MODEL_NAME = specific_config["name"]
+    modelConfigDict = {
+        'CHANNEL' : CHANNELS,
+        'PATCH' : specific_config['patch_size'],
+        'EMBEDDING' : specific_config['emb_size'],
+        'IMAGE' : IMAGE,
+        'NUM_HEADS' : specific_config['num_heads'],
+        'MLP_RATIO' : specific_config['mlp_ratio'],
+        'DROPOUT' : specific_config['dropout'],
+        'NUM_CLASSES' : NUM_CLASSES,
+        'DEPTH' : specific_config['depth']
+    }    
+
     # training config
     trainingConfig = config['training']
     LEARNING_RATE = trainingConfig['lr']
@@ -202,10 +214,16 @@ def main():
         break
     
     # loading model
-    model = VisionTransformerSmall(config).to(device)
+    model = VisionTransformerSmall(**modelConfigDict).to(device)
     # logging model parameters and config
+    print('Data Configuration:')
+    for k, v in dataset_config.items():
+        print(f"  {k}: {v}")
     print("Model Configuration:")
-    for k, v in vitSmall_config.items():
+    for k, v in specific_config.items():
+        print(f"  {k}: {v}")
+    print("Training Configuration:")
+    for k, v in trainingConfig.items():
         print(f"  {k}: {v}")
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Total Trainable Parameters: {total_params:,} ({total_params / 1e6:.2f}M)")
