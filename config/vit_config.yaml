@@ -15,6 +15,14 @@ data:
     img_size: 32
     mean_aug: [0.5071, 0.4867, 0.4408]
     std_aug: [0.2675, 0.2565, 0.2761]
+  TINYIMAGENET:
+    dataset : 'TINYIMAGENET'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
+    batch_size: 128
+    num_workers: 8
+    img_size: 64
+    mean_aug: [0.4802, 0.4481, 0.3975]
+    std_aug: [0.2302, 0.2265, 0.2262]
 
 ### code snippet for calculating the mean/std deviation from the dataset.
 # from torchvision import datasets, transforms
