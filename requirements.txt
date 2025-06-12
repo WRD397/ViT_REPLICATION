@@ -69,6 +69,7 @@ six==1.17.0
 stack-data==0.6.3
 sympy==1.14.0
 timm==1.0.15
+tinyimagenet==0.9.9
 tokenizers==0.21.1
 torch==2.7.0
 torchvision==0.22.0
