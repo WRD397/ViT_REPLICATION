@@ -22,6 +22,7 @@ data:
   TINYIMAGENET:
     dataset : 'TINYIMAGENET'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
+
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -38,7 +39,7 @@ model:
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper 
     mlp_ratio: 3.0 # orignial paper 4.0
-    dropout: 0.3
+    dropout: 0.2
 
 training:
   mixup:
