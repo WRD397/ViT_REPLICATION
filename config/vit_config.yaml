@@ -2,6 +2,7 @@ data:
   CIFAR10:
     dataset : 'CIFAR10'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR10'
+    channels: 3
     batch_size: 64
     num_workers: 4
     img_size: 32
@@ -11,6 +12,7 @@ data:
   CIFAR100:
     dataset : 'CIFAR100'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
+    channels: 3
     batch_size: 128
     num_workers: 8
     img_size: 32
@@ -20,6 +22,7 @@ data:
   TINYIMAGENET:
     dataset : 'TINYIMAGENET'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
+    channels: 3
     batch_size: 128
     num_workers: 8
     img_size: 64
@@ -48,9 +51,7 @@ data:
 model:
   VIT_SMALL:
     name: 'vit_small'
-    img_size: 32 # should be same as img_size mentioned in data section
     patch_size: 4
-    in_channels: 3
     emb_size: 512 # 768 in original paper
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper 
