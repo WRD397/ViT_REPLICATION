@@ -231,7 +231,7 @@ def main():
     print(model.patch_embed.projection.weight[0][0][:5]) 
 
     # optimizer & scheduler
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     scheduler_warmup_obj = None
     scheduler_warmup_enabled_flag = False
     if USE_SCHEDULER : 
