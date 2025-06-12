@@ -132,12 +132,15 @@ def main():
     # Load config
     config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
     # loading cifar100
-    cifar100_config = config["data"]['CIFAR100']
-    DATASET = cifar100_config["dataset"]
-    DATA_DIR = cifar100_config["data_path"]
-    BATCH = cifar100_config["batch_size"]
-    NUM_WORKERS = cifar100_config["num_workers"]
-    IMAGE = cifar100_config["img_size"]
+    #cifar100_config = config["data"]['CIFAR100']
+    dataset_config = config["data"]['CIFAR10']
+
+    DATASET = dataset_config["dataset"]
+    DATA_DIR = dataset_config["data_path"]
+    BATCH = dataset_config["batch_size"]
+    NUM_WORKERS = dataset_config["num_workers"]
+    IMAGE = dataset_config["img_size"]
+
     # Model
     modelConfig = config["model"]
     vitSmall_config = modelConfig['VIT_SMALL']
