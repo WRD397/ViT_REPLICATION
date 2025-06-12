@@ -41,10 +41,11 @@ class DatasetLoader:
             std_cifar10  = cifar10_cfg['std_aug']  
             img_size = self.img_size
             train_transform_cifar10 = transforms.Compose([
-                #transforms.RandomCrop(img_size, padding=4), ## less harsh
-                transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.RandomCrop(img_size, padding=4), ## less harsh
+                #transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                #transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.RandAugment(num_ops=2, magnitude=9), # alternate to color jitter
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar10, std_cifar10)
             ])
