@@ -140,12 +140,13 @@ def main():
     BATCH = dataset_config["batch_size"]
     NUM_WORKERS = dataset_config["num_workers"]
     IMAGE = dataset_config["img_size"]
+    NUM_CLASSES = dataset_config["num_classes"]
 
     # Model
     modelConfig = config["model"]
     vitSmall_config = modelConfig['VIT_SMALL']
     MODEL_NAME = vitSmall_config["name"]
-    NUM_CLASSES = vitSmall_config["num_classes"]
+    
     # training config
     trainingConfig = config['training']
     LEARNING_RATE = trainingConfig['lr']
