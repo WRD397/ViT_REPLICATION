@@ -4,12 +4,12 @@ from dotenv import load_dotenv
 load_dotenv()
 ROOT_DIR_PATH = os.environ.get('ROOT_PATH')
 sys.path.append(os.path.abspath(ROOT_DIR_PATH))  # Adds root directory to sys.path
-
-import torch
+from pathlib import Path
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from utils.config_loader import load_config
+from tinyimagenet import TinyImageNet
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
@@ -41,8 +41,9 @@ class DatasetLoader:
             std_cifar10  = cifar10_cfg['std_aug']  
             img_size = self.img_size
             train_transform_cifar10 = transforms.Compose([
-                transforms.RandomCrop(img_size, padding=4),
-                transforms.RandomHorizontalFlip(),
+                #transforms.RandomCrop(img_size, padding=4), ## less harsh
+                transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                transforms.RandomHorizontalFlip(p=0.5),
                 transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar10, std_cifar10)
@@ -76,6 +77,25 @@ class DatasetLoader:
             return datasets.MNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'FASHIONMNIST':
             return datasets.FashionMNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
+        elif self.dataset_name == 'TINYIMAGENET':
+            tinyiimg_cfg = data_cfg['TINYIMAGENET']
+            mean_tinyimg= tinyiimg_cfg['mean_aug']
+            std_tinyimg  = tinyiimg_cfg['std_aug']
+            img_size = self.img_size
+            train_transform_tinyimg = transforms.Compose([
+                transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(mean_tinyimg, std_tinyimg)
+            ])
+            val_transform_tinyimg = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean_tinyimg, std_tinyimg)
+            ])
+            transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
+            split = "train" if train else "val"
+            return TinyImageNet(Path(self.data_dir), split=split, transform=transform_tinyimg)
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
