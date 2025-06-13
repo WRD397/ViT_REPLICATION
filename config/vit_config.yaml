@@ -22,7 +22,6 @@ data:
   TINYIMAGENET:
     dataset : 'TINYIMAGENET'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
-
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -43,18 +42,18 @@ model:
 
 training:
   mixup:
-    enabled: false
+    enabled: true
     mixup_alpha: 0.2
-    cutmix_alpha: 0.1
+    cutmix_alpha: 0.2
     label_smoothing_mixup: 0.1
-  epochs: 100
+  epochs: 300
   lr: 0.0003
-  weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
-  warmup_steps : 20
-  label_smoothing_enabled : true
-  label_smoothing : 0.1 # increase to reduce overfitting
+  warmup_steps : 30
+  label_smoothing_enabled : false
+  label_smoothing : 0.2 # increase to reduce overfitting
 
 
 
