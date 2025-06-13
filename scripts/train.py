@@ -133,7 +133,7 @@ def main():
     config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
     # loading cifar100
     #cifar100_config = config["data"]['CIFAR100']
-    dataset_config = config["data"]['CIFAR10']
+    dataset_config = config["data"]['CIFAR100']
 
     DATASET = dataset_config["dataset"]
     DATA_DIR = dataset_config["data_path"]
