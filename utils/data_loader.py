@@ -62,11 +62,14 @@ class DatasetLoader:
             std_cifar100  = cifar100_cfg['std_aug']
             img_size = self.img_size
             train_transform_cifar100 = transforms.Compose([
-                transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                #transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                #transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
-                transforms.Normalize(mean_cifar100, std_cifar100)
+                transforms.Normalize(mean_cifar100, std_cifar100),
+                transforms.RandomErasing(p=0.25, scale=(0.02, 0.2), ratio=(0.3, 3.3), value='random')
             ])
             val_transform_cifar100 = transforms.Compose([
                 transforms.ToTensor(),
