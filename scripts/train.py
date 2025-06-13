@@ -88,10 +88,6 @@ def validate(model, loader, criterion, device):
     with torch.no_grad():
         for inputs, labels in progress_bar:
             inputs, labels = inputs.to(device), labels.to(device)
-            
-            # If labels are soft (e.g., using BCEWithLogitsLoss), convert to float
-            if labels.ndim == 2:
-                labels = labels.type_as(inputs)
 
             outputs = model(inputs)
             loss = criterion(outputs, labels)
@@ -99,17 +95,7 @@ def validate(model, loader, criterion, device):
             running_loss += loss.item() * inputs.size(0)
             # Compute accuracy
             _, predicted = outputs.max(1)
-
-            if labels.ndim == 2:
-                # Soft labels → convert to class index
-                _, true_classes = labels.max(1)
-                correct += predicted.eq(true_classes).sum().item()
-
-            else:
-                # Hard labels
-                correct += predicted.eq(labels).sum().item()
-
-
+            correct += predicted.eq(labels).sum().item()
             total += labels.size(0)
 
             # Avoid division by zero on first step
@@ -134,7 +120,6 @@ def main():
     # loading cifar100
     #cifar100_config = config["data"]['CIFAR100']
     dataset_config = config["data"]['CIFAR100']
-
     DATASET = dataset_config["dataset"]
     DATA_DIR = dataset_config["data_path"]
     BATCH = dataset_config["batch_size"]
@@ -194,11 +179,11 @@ def main():
             num_classes=NUM_CLASSES
         )
         train_criterion = nn.BCEWithLogitsLoss()
-        val_criterion = nn.CrossEntropyLoss()
+        val_criterion = nn.CrossEntropyLoss(label_smoothing=0.0) #NO LABEL SMOOTHENING during validation
     else:        
         mixup_fn = None
         train_criterion = nn.CrossEntropyLoss(label_smoothing=LABEL_SMOOTHENING if USE_LABEL_SMOOTHENING else 0.0)
-        val_criterion = train_criterion
+        val_criterion =  nn.CrossEntropyLoss(label_smoothing=0.0) #NO LABEL SMOOTHENING during validation
 
     # loading data
     print(f'loading dataset : {DATASET}')
