@@ -158,6 +158,7 @@ def main():
         'NUM_CLASSES' : NUM_CLASSES,
         'DEPTH' : specific_config['depth']
     }    
+    CHECKPOINT_DIR = f'{ROOT_DIR_PATH}/checkpoints/{MODEL_NAME}'
 
     # training config
     trainingConfig = config['training']
@@ -280,13 +281,16 @@ def main():
         max_mem_used = max(max_mem_used, mem_used_mb)
         max_gpu_util = max(max_gpu_util, util_info.gpu)
         max_mem_util = max(max_mem_util, util_info.memory)
-
+        import copy
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_val_loss = val_loss
             corresponding_train_acc = train_acc
             corresponding_train_loss = train_loss
-            best_model_state = model.state_dict()
+            best_epoch = epoch
+            best_model_state = copy.deepcopy(model.state_dict())
+            best_optimizer_state = copy.deepcopy(optimizer.state_dict())
+
         
         endTime = time.time()
         elapsedTime = endTime - startTime
@@ -295,15 +299,26 @@ def main():
         seconds = int(elapsedTime % 60)
         print(f"Elapsed Time : {hours}h : {minutes}m : {seconds}s")
   
-    # endTime = time.time()
-    # elapsedTime = endTime - startTime
-    # hours = int(elapsedTime // 3600)
-    # minutes = int((elapsedTime % 3600) // 60)
-    # seconds = int(elapsedTime % 60)
-    
     # gpu monitoring shutdown 
     nvmlShutdown()
-    
+
+    # saving the best state
+    best_model_name_save = f'{MODEL_NAME}_data{DATASET}_valacc{round(best_val_acc)}.pth'
+    try :
+        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+        torch.save({
+                    'epoch': best_epoch,
+                    'model_state_dict': best_model_state,
+                    'optimizer_state_dict': best_optimizer_state,
+                    'val_acc': best_val_acc,
+                    'val_loss': best_val_loss,
+                    'train_acc': corresponding_train_acc,
+                    'train_loss': corresponding_train_loss,
+                },f'{CHECKPOINT_DIR}/{best_model_name_save}')
+        print(f"Saved best model from epoch {best_epoch} with val_acc={best_val_acc:.4f}")
+    except Exception as e:
+        raise Exception(f'\n****nmodel save failed due to error\n {e}\n')
+
     print('\n====== Model Performance =======')
     print(f"Train     Loss: {corresponding_train_loss:.4f},    Accuracy: {corresponding_train_acc:.2f}%")
     print(f"Val(Best) Loss: {best_val_loss:.4f}, Accuracy: {best_val_acc:.2f}%")
@@ -313,10 +328,6 @@ def main():
     print(f"Peak GPU Utilization: {max_gpu_util}%")
     print(f"Peak Memory Bandwidth Utilization: {max_mem_util}%")
     print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s\n\n")
-
-    # # Save model
-    # save_model(model_state=best_model_state, model_name=modelName, epoch=epoch, val_acc=best_val_acc)
-    # print(f"Model saved as {modelName} inside checkpoints")
     
 
 if __name__ == "__main__":
