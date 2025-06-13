@@ -49,7 +49,7 @@ training:
     label_smoothing_mixup: 0.1
   epochs: 100
   lr: 0.0003
-  weight_decay: 0.005 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 20
