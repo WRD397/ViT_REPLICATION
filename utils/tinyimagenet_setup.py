@@ -50,7 +50,6 @@ def prepare_tiny_imagenet():
         print('creating the destination dir. & downloading')
         os.makedirs(os.path.dirname(dst_dir), exist_ok=True)
         download_tiny_imagenet(zip_fname)
-        print(f"TinyImageNet is ready under: {dst_dir}/")
     else:
         print(f"Dataset directory {dst_dir} already exists, zip downloaded.")
 
@@ -60,6 +59,9 @@ def prepare_tiny_imagenet():
         print(f"TinyImageNet is ready under: {dst_dir}")
     else : print(f'TinyImageNet already exists under: {dst_dir}')
 
-
-if __name__ == '__main__':
+def main():
     prepare_tiny_imagenet()
+    
+if __name__ == '__main__':
+    main()
+    

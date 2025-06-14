@@ -126,6 +126,9 @@ def main():
     IMAGE = dataset_config["img_size"]
     NUM_CLASSES = dataset_config["num_classes"]
     CHANNELS = dataset_config["channels"]
+    if DATASET == 'TINYIMAGENET':
+        SUBSET_ENABLED = dataset_config['subset_enabled']
+        SUBSET_SIZE = dataset_config['subset_size']
     
     # Model
     modelConfig = config["model"]
@@ -167,6 +170,7 @@ def main():
     print('LR Scheduler is Enabled') if USE_SCHEDULER else print('LR Scheduler is Disabled')
     print('LR SchedulerWarmup is Enabled') if USE_SCHEDULER_WARMUP else print('LR SchedulerWarmup is Disabled')
     print('MixUp is Enabled') if USE_MIXUP else print('MixUp is Disabled')
+    if DATASET == 'TINYIMAGENET': print(f'Subset is Enabled - {SUBSET_SIZE}') if SUBSET_ENABLED else print('Subset is Disabled.')
     print('-----------')
     # === Mixup Setup ===
     mixup_fn = None
