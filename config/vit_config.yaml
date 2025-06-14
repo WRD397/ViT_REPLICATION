@@ -21,7 +21,7 @@ data:
     num_classes: 100
   TINYIMAGENET:
     dataset : 'TINYIMAGENET'
-    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET' 
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -37,7 +37,7 @@ model:
     emb_size: 512 # 768 in original paper
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper
-    mlp_ratio: 3.0 # orignial paper 4.0
+    mlp_ratio: 2.0 # orignial paper 4.0
     dropout: 0.2
 
 training:
@@ -48,7 +48,7 @@ training:
     label_smoothing_mixup: 0.1
   epochs: 300
   lr: 0.0003
-  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.05 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
