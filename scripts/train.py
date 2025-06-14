@@ -157,6 +157,9 @@ def main():
     WARMUP_STEPS = trainingConfig['warmup_steps']
     USE_LABEL_SMOOTHENING = trainingConfig["label_smoothing_enabled"]
     LABEL_SMOOTHENING = trainingConfig["label_smoothing"]
+    EARLY_STOPPING_PATIENCE = trainingConfig["es_patience"]
+    EARLY_STOPPING_IMPROVEMENT_DELTA = trainingConfig["es_improv_delta"]
+
     # mixup config
     mixupConfig = trainingConfig['mixup']
     MIXUP_ALPHA = mixupConfig["mixup_alpha"]
@@ -245,6 +248,8 @@ def main():
     max_mem_used = 0
     max_gpu_util = 0
     max_mem_util = 0
+    # earlystopping
+    epochs_without_improvement = 0
 
     # Training loop
     nvmlInit()
@@ -269,8 +274,9 @@ def main():
         max_mem_used = max(max_mem_used, mem_used_mb)
         max_gpu_util = max(max_gpu_util, util_info.gpu)
         max_mem_util = max(max_mem_util, util_info.memory)
+        
         import copy
-        if val_acc > best_val_acc:
+        if val_acc > best_val_acc + EARLY_STOPPING_IMPROVEMENT_DELTA:
             best_val_acc = val_acc
             best_val_loss = val_loss
             corresponding_train_acc = train_acc
@@ -279,7 +285,15 @@ def main():
             best_model_state = copy.deepcopy(model.state_dict())
             best_optimizer_state = copy.deepcopy(optimizer.state_dict())
 
-        
+            epochs_without_improvement = 0
+        else:
+            epochs_without_improvement+=1
+
+        # Early stopping condition
+        if epochs_without_improvement >= EARLY_STOPPING_PATIENCE:
+            print(f"\nEarly stopping triggered. No improvement(delta={EARLY_STOPPING_IMPROVEMENT_DELTA}) in val_acc for {early_stop_patience} consecutive epochs.")
+            break
+
         endTime = time.time()
         elapsedTime = endTime - startTime
         hours = int(elapsedTime // 3600)
