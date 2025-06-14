@@ -38,9 +38,6 @@ def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
         #print(f'input shape : {inputs.shape}, taget_shape : {targets.shape}, target dim : {targets.ndim}')
         inputs, targets = inputs.to(device), targets.to(device)
         if mixup_fn is not None:
-            #if targets.ndim > 1:
-                #targets = targets.view(-1)
-            #targets = torch.nn.functional.one_hot(targets, num_classes=class_count).float()
             inputs, targets = mixup_fn(inputs, targets)
 
         if targets.ndim == 2:
