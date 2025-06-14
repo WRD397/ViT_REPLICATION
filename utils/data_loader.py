@@ -113,7 +113,11 @@ class DatasetLoader:
                 if train:
                     subset_size = subset_size
                     indices = torch.randperm(len(dataset))[:subset_size]
-                    dataset = torch.utils.data.Subset(dataset, indices)
+                    subset = torch.utils.data.Subset(dataset, indices)
+                    subset.classes = dataset.classes
+                    subset.class_to_idx = dataset.class_to_idx
+                    subset.targets = [dataset.targets[i] for i in indices] 
+                    dataset = subset           
             return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
