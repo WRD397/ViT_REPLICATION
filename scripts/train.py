@@ -120,7 +120,7 @@ def main():
     # data
     dataset_config = config["data"]['TINYIMAGENET']
     DATASET = dataset_config["dataset"]
-    DATA_DIR = dataset_config["data_path"]
+    DATA_DIR =f'{ROOT_DIR_PATH}/data/TINYIMAGENET/'
     BATCH = dataset_config["batch_size"]
     NUM_WORKERS = dataset_config["num_workers"]
     IMAGE = dataset_config["img_size"]
