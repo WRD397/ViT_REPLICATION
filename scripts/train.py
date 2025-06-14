@@ -117,9 +117,8 @@ def main():
 
     # Load config
     config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
-    # loading cifar100
-    #cifar100_config = config["data"]['CIFAR100']
-    dataset_config = config["data"]['CIFAR100']
+    # data
+    dataset_config = config["data"]['TINYIMAGENET']
     DATASET = dataset_config["dataset"]
     DATA_DIR = dataset_config["data_path"]
     BATCH = dataset_config["batch_size"]
@@ -317,5 +316,6 @@ def main():
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
     main()
     
