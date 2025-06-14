@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 ROOT_DIR_PATH = os.environ.get('ROOT_PATH')
 sys.path.append(os.path.abspath(ROOT_DIR_PATH))  # Adds root directory to sys.path
+import torch
 from pathlib import Path
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
@@ -87,6 +88,8 @@ class DatasetLoader:
             tinyiimg_cfg = data_cfg['TINYIMAGENET']
             mean_tinyimg= tinyiimg_cfg['mean_aug']
             std_tinyimg  = tinyiimg_cfg['std_aug']
+            subset_enabled = tinyiimg_cfg['subset_enabled']
+            subset_size = tinyiimg_cfg['subset_size']
             img_size = self.img_size
             train_transform_tinyimg = transforms.Compose([
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
@@ -105,7 +108,13 @@ class DatasetLoader:
             transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
             split_folder = "train" if train else "val"
             dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
-            return ImageFolder(root=dataset_path, transform=transform_tinyimg)
+            dataset = ImageFolder(root=dataset_path, transform=transform_tinyimg)
+            if subset_enabled:
+                if train:
+                    subset_size = subset_size
+                    indices = torch.randperm(len(dataset))[:subset_size]
+                    dataset = torch.utils.data.Subset(dataset, indices)
+            return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
@@ -117,7 +126,9 @@ class DatasetLoader:
                                   shuffle=True, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size,
                                  shuffle=False, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
-
+        
+        print(f'training size  : {len(train_loader.dataset)}')
+        print(f'validation size : {len(test_loader.dataset)}')
         return train_loader, test_loader
 
 
