@@ -26,7 +26,7 @@ from timm.data import Mixup
 import numpy as np
 from transformers import get_cosine_schedule_with_warmup
 
-def train_one_epoch(model, loader, criterion, optimizer, device, 
+def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
                     mixup_fn=None, scheduler_warmup_enabled=False, scheduler_warmup=None):
     model.train()
     running_loss = 0.0
@@ -38,6 +38,7 @@ def train_one_epoch(model, loader, criterion, optimizer, device,
         #print(f'input shape : {inputs.shape}, taget_shape : {targets.shape}, target dim : {targets.ndim}')
         inputs, targets = inputs.to(device), targets.to(device)
         if mixup_fn is not None:
+            targets = torch.nn.functional.one_hot(targets, num_classes=class_count).float()
             inputs, targets = mixup_fn(inputs, targets)
 
         if targets.ndim == 2:
@@ -251,7 +252,7 @@ def main():
     for epoch in range(EPOCHS):
         print(f"\nEpoch {epoch+1}/{EPOCHS}")
 
-        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, device, 
+        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, device, class_count=NUM_CLASSES,
                                                 mixup_fn=mixup_fn,
                                                 scheduler_warmup_enabled=scheduler_warmup_enabled_flag,
                                                 scheduler_warmup=scheduler_warmup_obj)
