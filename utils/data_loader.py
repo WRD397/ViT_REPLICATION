@@ -9,7 +9,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from utils.config_loader import load_config
-from tinyimagenet import TinyImageNet
+from torchvision.datasets import ImageFolder
+from utils.tinyimagenet_setup import prepare_tiny_imagenet
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
@@ -82,6 +83,7 @@ class DatasetLoader:
         elif self.dataset_name == 'FASHIONMNIST':
             return datasets.FashionMNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'TINYIMAGENET':
+            prepare_tiny_imagenet()
             tinyiimg_cfg = data_cfg['TINYIMAGENET']
             mean_tinyimg= tinyiimg_cfg['mean_aug']
             std_tinyimg  = tinyiimg_cfg['std_aug']
@@ -89,17 +91,21 @@ class DatasetLoader:
             train_transform_tinyimg = transforms.Compose([
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
                 transforms.RandomHorizontalFlip(p=0.5),
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
-                transforms.Normalize(mean_tinyimg, std_tinyimg)
+                transforms.Normalize(mean_tinyimg, std_tinyimg),
+                transforms.RandomErasing(p=0.25, scale=(0.02, 0.2), ratio=(0.3, 3.3), value='random')
             ])
+
             val_transform_tinyimg = transforms.Compose([
+                transforms.Resize((img_size, img_size)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_tinyimg, std_tinyimg)
             ])
             transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
-            split = "train" if train else "val"
-            return TinyImageNet(Path(self.data_dir), split=split, transform=transform_tinyimg)
+            split_folder = "train" if train else "val"
+            dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
+            return ImageFolder(root=dataset_path, transform=transform_tinyimg)
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
