@@ -39,16 +39,16 @@ model:
     emb_size: 512 # 768 in original paper
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper
-    mlp_ratio: 3.0 # orignial paper 4.0
+    mlp_ratio: 2.0 # orignial paper 4.0
     dropout: 0.2
 
 training:
   mixup:
-    enabled: false
-    mixup_alpha: 0.2
-    cutmix_alpha: 0.2
+    enabled: true
+    mixup_alpha: 0.1
+    cutmix_alpha: 0.1
     label_smoothing_mixup: 0.1
-  epochs: 300
+  epochs: 200
   lr: 0.0003
   weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
