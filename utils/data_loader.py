@@ -133,6 +133,8 @@ class DatasetLoader:
         
         print(f'training size  : {len(train_loader.dataset)}')
         print(f'validation size : {len(test_loader.dataset)}')
+        print(f"Classes: {len(train_dataset.classes)}")
+        print(f"Sample label: {train_dataset[0][1]}")
         return train_loader, test_loader
 
 

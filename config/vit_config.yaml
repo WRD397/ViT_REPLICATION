@@ -44,7 +44,7 @@ model:
 
 training:
   mixup:
-    enabled: true
+    enabled: false
     mixup_alpha: 0.2
     cutmix_alpha: 0.2
     label_smoothing_mixup: 0.1
