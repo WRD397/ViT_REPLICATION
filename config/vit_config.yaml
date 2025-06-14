@@ -45,8 +45,8 @@ model:
 training:
   mixup:
     enabled: true
-    mixup_alpha: 0.0
-    cutmix_alpha: 0.0
+    mixup_alpha: 0.0000000001
+    cutmix_alpha: 0.0000000001
     label_smoothing_mixup: 0.1
   epochs: 200
   lr: 0.0003
