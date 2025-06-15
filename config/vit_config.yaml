@@ -68,7 +68,7 @@ training:
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 20
-  label_smoothing_enabled : false
+  label_smoothing_enabled : true
   label_smoothing : 0.2 # increase to reduce overfitting
   es_patience : 10
   es_improv_delta : 0.001
