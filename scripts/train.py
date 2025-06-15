@@ -122,8 +122,13 @@ def main():
     RUN_NOTES = config['run_notes']
     WANDB_TAGS = config['wandb_tags']
 
+    # *************  choosing the DATASET & MODEL *************
+    dataset_config = config["data"]['CIFAR10']
+    modelConfig = config["model"]
+    specific_config = modelConfig['VIT_TINYV0']
+    # **********************************************************
+    
     # data
-    dataset_config = config["data"]['TINYIMAGENET200']
     DATASET = dataset_config["dataset"]
     DATA_DIR =f'{ROOT_DIR_PATH}/data/TINYIMAGENET/'
     BATCH = dataset_config["batch_size"]
@@ -136,9 +141,6 @@ def main():
         SUBSET_SIZE = dataset_config['subset_size']
     
     # Model
-    modelConfig = config["model"]
-    specific_config = modelConfig['VIT_SMALL']
-    MODEL_NAME = specific_config["name"]
     modelConfigDict = {
         'CHANNEL' : CHANNELS,
         'PATCH' : specific_config['patch_size'],
