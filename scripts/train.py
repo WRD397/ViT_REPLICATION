@@ -25,6 +25,9 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from timm.data import Mixup
 import numpy as np
 from transformers import get_cosine_schedule_with_warmup
+import wandb
+from utils.checkpoints_manager import CheckpointManager
+from datetime import datetime as dt
 
 def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
                     mixup_fn=None, scheduler_warmup_enabled=False, scheduler_warmup=None):
@@ -111,14 +114,16 @@ def validate(model, loader, criterion, device):
     return avg_loss, accuracy
 
 def main():
-    # Device setup
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
+    print('loading config')
     # Load config
     config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
+    PROJECT_NAME = config['project']
+    RUN_NAME = config['run']
+    RUN_NOTES = config['run_notes']
+    WANDB_TAGS = config['wandb_tags']
+
     # data
-    dataset_config = config["data"]['TINYIMAGENET']
+    dataset_config = config["data"]['TINYIMAGENET200']
     DATASET = dataset_config["dataset"]
     DATA_DIR =f'{ROOT_DIR_PATH}/data/TINYIMAGENET/'
     BATCH = dataset_config["batch_size"]
@@ -126,7 +131,7 @@ def main():
     IMAGE = dataset_config["img_size"]
     NUM_CLASSES = dataset_config["num_classes"]
     CHANNELS = dataset_config["channels"]
-    if DATASET == 'TINYIMAGENET':
+    if DATASET == 'TINYIMAGENET200':
         SUBSET_ENABLED = dataset_config['subset_enabled']
         SUBSET_SIZE = dataset_config['subset_size']
     
@@ -145,7 +150,6 @@ def main():
         'NUM_CLASSES' : NUM_CLASSES,
         'DEPTH' : specific_config['depth']
     }    
-    CHECKPOINT_DIR = f'{ROOT_DIR_PATH}/checkpoints/{MODEL_NAME}'
 
     # training config
     trainingConfig = config['training']
@@ -166,6 +170,10 @@ def main():
     CUTMIX_ALPHA = mixupConfig["cutmix_alpha"]
     LABEL_SMOOTHENING_MIXUP = mixupConfig["label_smoothing_mixup"]
     USE_MIXUP = mixupConfig["enabled"]
+
+    # Device setup
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
    
     # logging switches
     print('-----------')
@@ -240,6 +248,52 @@ def main():
         )
         scheduler_warmup_obj = scheduler_warmup
 
+
+    loggable_config = {
+        "dataset": config["data"]["TINYIMAGENET200"]["dataset"],
+        "train_sample":len(train_loader),
+        "val_sample": len(val_loader),
+        "subset_size": config["data"]["TINYIMAGENET200"]["subset_size"],
+        "batch_size": config["data"]["TINYIMAGENET200"]["batch_size"],
+        "img_size": config["data"]["TINYIMAGENET200"]["img_size"],
+        
+        "model_name": config["model"]["VIT_TINYV0"]["name"],
+        "model_param_m": round((total_params / 1e6),2),
+        "patch_size": config["model"]["VIT_TINYV0"]["patch_size"],
+        "embed_dim": config["model"]["VIT_TINYV0"]["emb_size"],
+        "depth": config["model"]["VIT_TINYV0"]["depth"],
+        "heads": config["model"]["VIT_TINYV0"]["num_heads"],
+        "mlp_ratio": config["model"]["VIT_TINYV0"]["mlp_ratio"],
+        "dropout": config["model"]["VIT_TINYV0"]["dropout"],
+
+        "epochs": config["training"]["epochs"],
+        "lr": config["training"]["lr"],
+        "mixup_alpha": config["training"]["mixup"]["mixup_alpha"] if config["training"]["mixup"]["enabled"] else np.nan,
+        "cutmix_alpha": config["training"]["mixup"]["cutmix_alpha"] if config["training"]["mixup"]["enabled"] else np.nan,
+        "label_smooth_mixup": config["training"]["mixup"]["label_smoothing_mixup"] if config["training"]["mixup"]["enabled"] else np.nan,
+        "label_smooth": config["training"]["label_smoothing"] if config["training"]["label_smoothing_enabled"] else np.nan,
+        "weight_decay": config["training"]["weight_decay"]
+    }
+
+    print('initializing wandb')
+    timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
+    run_id = f"{RUN_NAME}_{timestamp}"
+    with open("{ROOT_DIR_PATH}/wandb_runids/wandb_run_id.txt", "w") as f:
+        f.write(run_id)
+    wandb.init(
+        project=PROJECT_NAME, 
+        id=run_id,
+        name=RUN_NAME,
+        notes = RUN_NOTES,
+        resume="never",
+        config=loggable_config,
+        allow_val_change=True,
+        tags=WANDB_TAGS
+        )
+    
+    wandb.define_metric("*", summary="none")  # suppress all
+    checkpoint_manager = CheckpointManager()
+
     # monitors initialization
     best_val_acc = 0.0
     best_val_loss = np.inf
@@ -257,8 +311,8 @@ def main():
     gpu_name = nvmlDeviceGetName(handle)
 
     startTime = time.time()
-    for epoch in range(EPOCHS):
-        print(f"\nEpoch {epoch+1}/{EPOCHS}")
+    for epoch in range(1,EPOCHS+1):
+        print(f"\nEpoch {epoch}/{EPOCHS}")
 
         train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, device, class_count=NUM_CLASSES,
                                                 mixup_fn=mixup_fn,
@@ -300,27 +354,32 @@ def main():
         minutes = int((elapsedTime % 3600) // 60)
         seconds = int(elapsedTime % 60)
         print(f"Elapsed Time : {hours}h : {minutes}m : {seconds}s")
-  
+
+        # Log to wandb
+        wandb.log({
+            "Epoch": epoch,
+            "Train Loss": train_loss,
+            "Train Acc": train_acc,
+            "Val Loss": val_loss,
+            "Val Acc": val_acc
+        })
+        # saving the latest best model/optimizer dict at 10 epochs interval
+        checkpoint_manager.save_and_upload(
+            epoch,
+            best_model_state,
+            best_optimizer_state,
+            extra={"val_acc": best_val_acc,
+                   "val_loss": best_val_loss,
+                   "train_acc":corresponding_train_acc,
+                   "train_loss":corresponding_train_loss
+                   }
+        )
+
+
     # gpu monitoring shutdown 
     nvmlShutdown()
 
     # saving the best state
-    best_model_name_save = f'{MODEL_NAME}_data{DATASET}_valacc{round(best_val_acc)}.pth'
-    try :
-        os.makedirs(CHECKPOINT_DIR, exist_ok=True)
-        torch.save({
-                    'epoch': best_epoch,
-                    'model_state_dict': best_model_state,
-                    'optimizer_state_dict': best_optimizer_state,
-                    'val_acc': best_val_acc,
-                    'val_loss': best_val_loss,
-                    'train_acc': corresponding_train_acc,
-                    'train_loss': corresponding_train_loss,
-                },f'{CHECKPOINT_DIR}/{best_model_name_save}')
-        print(f"Saved best model from epoch {best_epoch} with val_acc={best_val_acc:.4f}")
-    except Exception as e:
-        raise Exception(f'\n****nmodel save failed due to error\n {e}\n')
-
     print('\n====== Model Performance =======')
     print(f"Train     Loss: {corresponding_train_loss:.4f},    Accuracy: {corresponding_train_acc:.2f}%")
     print(f"Val(Best) Loss: {best_val_loss:.4f}, Accuracy: {best_val_acc:.2f}%")
@@ -329,6 +388,24 @@ def main():
     print(f"Peak GPU Memory: {max_mem_used:.2f} MB")
     print(f"Peak GPU Utilization: {max_gpu_util}%")
     print(f"Peak Memory Bandwidth Utilization: {max_mem_util}%")
+
+    print('\n\n-----------')
+    print(f"saving & uploading the best model state as till epoch : {epoch}")
+    print(f"Best model Epoch : {best_epoch}")
+    checkpoint_manager.save_checkpoint(
+        best_epoch,
+        best_model_state,
+        best_optimizer_state,
+        extra={"val_acc": best_val_acc,
+                   "val_loss": best_val_loss,
+                   "train_acc":corresponding_train_acc,
+                   "train_loss":corresponding_train_loss
+                   }
+    )
+    checkpoint_manager.upload_to_wandb()
+    time.sleep(5)
+    checkpoint_manager.cleanup_old_wandb_artifacts()   
+    print('-----------\n')
     print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s\n\n")
     
 
