@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv0_cifar10_testV0"
-run_notes : "testing the pipeline with cifar10. using epoch 55"
+run_notes : "testing the pipeline with cifar10. using epoch 55, embed 64"
 wandb_tags : ["ViT", "CIFAR10", "test"]
 
 data:
@@ -41,7 +41,7 @@ model:
   VIT_TINYV0:
     name: 'vit_tiny_v0'
     patch_size: 4
-    emb_size: 512 # 768 in original paper
+    emb_size: 64 # 768 in original paper
     depth: 10 # 12 in original paper
     num_heads: 8 # 12 in original paper
     mlp_ratio: 3.0 # orignial paper 4.0
@@ -53,7 +53,7 @@ training:
     mixup_alpha: 0.1
     cutmix_alpha: 0.01
     label_smoothing_mixup: 0.1
-  epochs: 200
+  epochs: 55
   lr: 0.001
   weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
