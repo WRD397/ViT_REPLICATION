@@ -1,5 +1,5 @@
 project : "VIT_EXPLORATION"
-run : "cifar10_testV0"
+run : "vittinyv0_cifar10_testV0"
 run_notes : "testing the pipeline with cifar10. using epoch 55"
 wandb_tags : ["ViT", "CIFAR10", "test"]
 
