@@ -141,6 +141,7 @@ def main():
         SUBSET_SIZE = dataset_config['subset_size']
     
     # Model
+    MODEL_NAME = specific_config['name']
     modelConfigDict = {
         'CHANNEL' : CHANNELS,
         'PATCH' : specific_config['patch_size'],
@@ -252,21 +253,21 @@ def main():
 
 
     loggable_config = {
-        "dataset": config["data"]["TINYIMAGENET200"]["dataset"],
+        "dataset": DATASET,
         "train_sample":len(train_loader),
         "val_sample": len(val_loader),
-        "subset_size": config["data"]["TINYIMAGENET200"]["subset_size"],
-        "batch_size": config["data"]["TINYIMAGENET200"]["batch_size"],
-        "img_size": config["data"]["TINYIMAGENET200"]["img_size"],
+        "subset_size": SUBSET_SIZE if DATASET == 'TINYIMAGENET200' else np.nan,
+        "batch_size": BATCH,
+        "img_size": IMAGE,
         
-        "model_name": config["model"]["VIT_TINYV0"]["name"],
+        "model_name": MODEL_NAME,
         "model_param_m": round((total_params / 1e6),2),
-        "patch_size": config["model"]["VIT_TINYV0"]["patch_size"],
-        "embed_dim": config["model"]["VIT_TINYV0"]["emb_size"],
-        "depth": config["model"]["VIT_TINYV0"]["depth"],
-        "heads": config["model"]["VIT_TINYV0"]["num_heads"],
-        "mlp_ratio": config["model"]["VIT_TINYV0"]["mlp_ratio"],
-        "dropout": config["model"]["VIT_TINYV0"]["dropout"],
+        "patch_size": specific_config['patch_size'],
+        "embed_dim": specific_config["emb_size"],
+        "depth":specific_config["depth"],
+        "heads": specific_config["num_heads"],
+        "mlp_ratio": specific_config["mlp_ratio"],
+        "dropout":specific_config["dropout"],
 
         "epochs": config["training"]["epochs"],
         "lr": config["training"]["lr"],
@@ -289,7 +290,7 @@ def main():
         f.write(run_id)
 
     WANDB_API_KEY = os.environ.get("WANDB_API_KEY")
-    wandb.login(key=WANDB_API_KEY)
+    wandb.login(key=WANDB_API_KEY, relogin=True)
     wandb.init(
         project=PROJECT_NAME, 
         id=run_id,
