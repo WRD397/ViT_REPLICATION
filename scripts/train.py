@@ -288,6 +288,8 @@ def main():
     with open(runid_file_path, "w") as f:
         f.write(run_id)
 
+    WANDB_API_KEY = os.environ.get("WANDB_API_KEY")
+    wandb.login(key=WANDB_API_KEY)
     wandb.init(
         project=PROJECT_NAME, 
         id=run_id,
