@@ -21,3 +21,6 @@ checkpoints/
 
 # extra dumps
 extras/
+
+#wandb logs
+wandb/
