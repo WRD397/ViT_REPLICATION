@@ -278,10 +278,16 @@ def main():
     }
 
     print('initializing wandb')
+    
+    # creating and storing runids for future reference.
     timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
     run_id = f"{RUN_NAME}_{timestamp}"
-    with open("{ROOT_DIR_PATH}/wandb_runids/wandb_run_id.txt", "w") as f:
+    runid_file_path = f"{ROOT_DIR_PATH}/wandb_runids/wandb_run_id.txt"
+    dir_path = os.path.dirname(runid_file_path)
+    os.makedirs(dir_path, exist_ok=True)
+    with open(runid_file_path, "w") as f:
         f.write(run_id)
+
     wandb.init(
         project=PROJECT_NAME, 
         id=run_id,
