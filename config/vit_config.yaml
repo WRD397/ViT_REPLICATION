@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv1_cifar10_runV3"
-run_notes : "Augmentation Disabled - Data Augmentation, Mixup Disabled. epoch dec to 100"
+run_notes : "Augmentation Disabled - Data Augmentation & Mixup Disabled & Weight Decay disabled. epoch dec to 100"
 wandb_tags : ["ViT", "CIFAR10", "no augmentation"]
 
 data:
@@ -64,7 +64,7 @@ training:
     label_smoothing_mixup: 0.0
   epochs: 100
   lr: 0.0003
-  weight_decay: 0.008 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
