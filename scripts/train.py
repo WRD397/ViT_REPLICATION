@@ -389,7 +389,6 @@ def main():
                    }
         )
 
-
     # gpu monitoring shutdown 
     nvmlShutdown()
 
