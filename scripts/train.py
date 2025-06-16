@@ -125,7 +125,7 @@ def main():
     # *************  choosing the DATASET & MODEL *************
     dataset_config = config["data"]['CIFAR10']
     modelConfig = config["model"]
-    specific_config = modelConfig['VIT_TINYV0']
+    specific_config = modelConfig['VIT_TINYV1']
     # **********************************************************
     
     # data
