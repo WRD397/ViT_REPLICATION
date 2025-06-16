@@ -35,7 +35,7 @@ class CheckpointManager:
             print('start saving & loading the checkpoint as backup...')
             self.save_checkpoint(epoch, model_state, optimizer_state, extra)
             self.upload_to_wandb()
-            time.sleep(5)
+            time.sleep(10)
             self.cleanup_old_wandb_artifacts()
         return None
 
@@ -75,7 +75,11 @@ class CheckpointManager:
                     artifact.delete()
                 except Exception as e:
                     print(f"Could not delete {artifact.name}: {e}")
-        else : print(f'not deleting anything as there is only {len(versions)} version: {[artifact.name for artifact in versions][0]}')
+        else : 
+            if len(versions)>0:
+                print(f'not deleting anything as there is only {len(versions)} version: {[artifact.name for artifact in versions][0]}')
+            else :
+                print(f'no file found.')
 
     def load_last_checkpoint(self):
         """
