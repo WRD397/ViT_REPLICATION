@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv1_cifar10_runV1"
-run_notes : "Epoch100 - running the tested version of vityTinyV1 on cifar10. it has succeeded with slight overfitting last time."
-wandb_tags : ["ViT", "CIFAR10", "no mixup"]
+run : "vittinyv1_cifar10_runV2"
+run_notes : "Enabling Mixup to see if the overfitting can be reduced a bit"
+wandb_tags : ["ViT", "CIFAR10", "mixup", "data augmentation"]
 
 data:
   CIFAR10:
@@ -58,9 +58,9 @@ model:
 
 training:
   mixup:
-    enabled: false
-    mixup_alpha: 0.1
-    cutmix_alpha: 0.01
+    enabled: true
+    mixup_alpha: 0.2
+    cutmix_alpha: 0.2
     label_smoothing_mixup: 0.1
   epochs: 100
   lr: 0.0003
@@ -68,8 +68,8 @@ training:
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 20
-  label_smoothing_enabled : true
-  label_smoothing : 0.2 # increase to reduce overfitting
+  label_smoothing_enabled : false
+  label_smoothing : 0.0 # increase to reduce overfitting
   es_patience : 10
   es_improv_delta : 0.001
 
