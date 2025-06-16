@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv1_cifar10_runV2"
-run_notes : "Slight overfitting - Mixup Enabled. weight decay inc to 0.01. epoch inc to 200"
-wandb_tags : ["ViT", "CIFAR10", "mixup", "data augmentation"]
+run : "vittinyv1_cifar10_runV3"
+run_notes : "Augmentation Disabled - Data Augmentation, Mixup Disabled. epoch dec to 100"
+wandb_tags : ["ViT", "CIFAR10", "no augmentation"]
 
 data:
   CIFAR10:
@@ -58,13 +58,13 @@ model:
 
 training:
   mixup:
-    enabled: true
-    mixup_alpha: 0.2
-    cutmix_alpha: 0.2
-    label_smoothing_mixup: 0.1
-  epochs: 200
+    enabled: false
+    mixup_alpha: 0.0
+    cutmix_alpha: 0.0
+    label_smoothing_mixup: 0.0
+  epochs: 100
   lr: 0.0003
-  weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.008 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
@@ -72,6 +72,7 @@ training:
   label_smoothing : 0.0 # increase to reduce overfitting
   es_patience : 10
   es_improv_delta : 0.001
+  augmentation_enabled : false
 
 
 ## ********* RESOURCES ***********
