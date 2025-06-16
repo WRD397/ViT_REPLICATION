@@ -35,7 +35,7 @@ class DatasetLoader:
         ])
 
     def get_dataset(self, train=True, transform=None):
-        AUG_ENABLED = data_cfg['augmentation_enabled']
+        AUG_ENABLED = config['training']['augmentation_enabled']
         if self.dataset_name == 'CIFAR10':
             #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
             # CIFAR-10 mean & std
@@ -117,7 +117,7 @@ class DatasetLoader:
                 transforms.Normalize(mean_tinyimg, std_tinyimg)
             ])
             transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
-            
+
             if AUG_ENABLED:
                 transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
             else :
