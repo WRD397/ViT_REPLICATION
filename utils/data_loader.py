@@ -35,12 +35,13 @@ class DatasetLoader:
         ])
 
     def get_dataset(self, train=True, transform=None):
+        AUG_ENABLED = data_cfg['augmentation_enabled']
         if self.dataset_name == 'CIFAR10':
             #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
             # CIFAR-10 mean & std
             cifar10_cfg = data_cfg['CIFAR10']
             mean_cifar10 = cifar10_cfg['mean_aug']
-            std_cifar10  = cifar10_cfg['std_aug']  
+            std_cifar10  = cifar10_cfg['std_aug']
             img_size = self.img_size
             train_transform_cifar10 = transforms.Compose([
                 transforms.RandomCrop(img_size, padding=4), ## less harsh
@@ -56,8 +57,13 @@ class DatasetLoader:
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar10, std_cifar10)
             ])
-            transform_cifar10 = train_transform_cifar10 if train else val_transform_cifar10
+            if AUG_ENABLED:
+                transform_cifar10 = train_transform_cifar10 if train else val_transform_cifar10
+            else :
+                transform_cifar10 = val_transform_cifar10
+            
             return datasets.CIFAR10(root=self.data_dir, train=train, download=True, transform=transform_cifar10)
+        
         elif self.dataset_name == 'CIFAR100':
             cifar100_cfg = data_cfg['CIFAR100']
             mean_cifar100 = cifar100_cfg['mean_aug']
@@ -74,10 +80,15 @@ class DatasetLoader:
                 transforms.RandomErasing(p=0.25, scale=(0.02, 0.2), ratio=(0.3, 3.3), value='random')
             ])
             val_transform_cifar100 = transforms.Compose([
+                transforms.Resize((img_size, img_size)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_cifar100, std_cifar100)
             ])
-            transform_cifar100 = train_transform_cifar100 if train else val_transform_cifar100
+            
+            if AUG_ENABLED:
+                transform_cifar100 = train_transform_cifar100 if train else val_transform_cifar100
+            else :
+                transform_cifar100 = val_transform_cifar100
             return datasets.CIFAR100(root=self.data_dir, train=train, download=True, transform=transform_cifar100)
         elif self.dataset_name == 'MNIST':
             return datasets.MNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
@@ -106,6 +117,12 @@ class DatasetLoader:
                 transforms.Normalize(mean_tinyimg, std_tinyimg)
             ])
             transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
+            
+            if AUG_ENABLED:
+                transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
+            else :
+                transform_tinyimg = val_transform_tinyimg
+
             split_folder = "train" if train else "val"
             dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_tinyimg)
