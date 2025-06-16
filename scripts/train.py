@@ -166,6 +166,7 @@ def main():
     LABEL_SMOOTHENING = trainingConfig["label_smoothing"]
     EARLY_STOPPING_PATIENCE = trainingConfig["es_patience"]
     EARLY_STOPPING_IMPROVEMENT_DELTA = trainingConfig["es_improv_delta"]
+    AUG_ENABLED = trainingConfig["augmentation_enabled"]
 
     # mixup config
     mixupConfig = trainingConfig['mixup']
@@ -173,7 +174,7 @@ def main():
     CUTMIX_ALPHA = mixupConfig["cutmix_alpha"]
     LABEL_SMOOTHENING_MIXUP = mixupConfig["label_smoothing_mixup"]
     USE_MIXUP = mixupConfig["enabled"]
-
+    
     # Device setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -184,6 +185,7 @@ def main():
     print('LR Scheduler is Enabled') if USE_SCHEDULER else print('LR Scheduler is Disabled')
     print('LR SchedulerWarmup is Enabled') if USE_SCHEDULER_WARMUP else print('LR SchedulerWarmup is Disabled')
     print('MixUp is Enabled') if USE_MIXUP else print('MixUp is Disabled')
+    print('Data Augmentation is Enabled') if AUG_ENABLED else print('Data Augmentation is Disabled')
     if DATASET == 'TINYIMAGENET': print(f'Subset is Enabled - {SUBSET_SIZE}') if SUBSET_ENABLED else print('Subset is Disabled.')
     print('-----------')
     # === Mixup Setup ===
@@ -275,7 +277,8 @@ def main():
         "cutmix_alpha": config["training"]["mixup"]["cutmix_alpha"] if config["training"]["mixup"]["enabled"] else np.nan,
         "label_smooth_mixup": config["training"]["mixup"]["label_smoothing_mixup"] if config["training"]["mixup"]["enabled"] else np.nan,
         "label_smooth": config["training"]["label_smoothing"] if config["training"]["label_smoothing_enabled"] else np.nan,
-        "weight_decay": config["training"]["weight_decay"]
+        "weight_decay": config["training"]["weight_decay"],
+        "augmentation":config["training"]["augmentation_enabled"]
     }
 
     print('initializing wandb')
@@ -414,11 +417,20 @@ def main():
                    }
     )
     checkpoint_manager.upload_to_wandb()
-    time.sleep(5)
+    time.sleep(10)
     checkpoint_manager.cleanup_old_wandb_artifacts()   
     print('-----------\n')
     print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s\n\n")
     
+    wandb.run.summary["performance"] = {
+    "trainAcc": corresponding_train_acc,
+    "trainLoss": corresponding_train_loss,
+    "valAcc": best_val_acc,
+    "valLoss": best_val_loss,
+    "elapsedTime":f"{hours}h : {minutes}m : {seconds}s"
+    }
+    # finishing the run
+    wandb.finish()
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
