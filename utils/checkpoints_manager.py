@@ -39,11 +39,12 @@ class CheckpointManager:
             self.cleanup_old_wandb_artifacts()
         return None
 
-    def save_checkpoint(self, epoch: int, model_state, optimizer_state, extra: Dict):
+    def save_checkpoint(self, epoch: int, model_state, optimizer_state, scheduler_state, extra: Dict):
         checkpoint = {
             "epoch": epoch,
             "model_state_dict": model_state,
             "optimizer_state_dict": optimizer_state,
+            "scheduler_state_dict": scheduler_state,
             **extra
         }
         torch.save(checkpoint, self.checkpoint_path)
