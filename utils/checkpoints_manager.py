@@ -28,12 +28,12 @@ class CheckpointManager:
         self.checkpoint_filename = f"{self.run_name}_last_checkpoint.pth"
         self.checkpoint_path = os.path.join(self.save_dir, self.checkpoint_filename)
 
-    def save_and_upload(self, epoch: int, model_state, optimizer_state, extra: Dict = {}):
+    def save_and_upload(self, epoch: int, model_state, optimizer_state,scheduler_state, extra: Dict = {}):
         """Save and upload the model if it's a checkpointing epoch."""
         if (epoch % self.epoch_interval != 0): ...
         else :
             print('start saving & loading the checkpoint as backup...')
-            self.save_checkpoint(epoch, model_state, optimizer_state, extra)
+            self.save_checkpoint(epoch, model_state, optimizer_state,scheduler_state, extra)
             self.upload_to_wandb()
             time.sleep(10)
             self.cleanup_old_wandb_artifacts()
