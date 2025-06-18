@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv2_cifar10_runV3"
+run : "vittinyv2_cifar100_runV0"
 run_notes : "Augmentation Disabled - Data Augmentation & Mixup Disabled & label smoothening disabled. only weight decay as regularization. epoch dec to 100"
-wandb_tags : ["ViT", "CIFAR10", "no augmentation"]
+wandb_tags : ["ViT", "CIFAR100", "no augmentation"]
 
 data:
   CIFAR10:
