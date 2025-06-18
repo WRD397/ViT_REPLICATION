@@ -28,6 +28,9 @@ from transformers import get_cosine_schedule_with_warmup
 import wandb
 from utils.checkpoints_manager import CheckpointManager
 from datetime import datetime as dt
+from torch.amp import GradScaler
+from torch.amp import autocast
+
 
 def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
                     mixup_fn=None, scheduler_warmup_enabled=False, scheduler_warmup=None):
@@ -35,6 +38,8 @@ def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
     running_loss = 0.0
     correct = 0
     total = 0
+
+    scaler = GradScaler()
 
     progress_bar = tqdm(loader, desc="Training", leave=True)
     for  inputs, targets in progress_bar:
@@ -47,10 +52,13 @@ def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
             targets = targets.type_as(inputs)
 
         optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
+        with autocast(device_type='cuda'):
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+        scaler.scale(loss).backward()  
+        scaler.step(optimizer)         
+        scaler.update()                
+
         if scheduler_warmup_enabled:
             if scheduler_warmup is None : raise Exception(f'scheduler warmup is enabled, but no scheduler object has been passed in train_one_epoch function')
             scheduler_warmup.step()
@@ -92,8 +100,9 @@ def validate(model, loader, criterion, device):
         for inputs, labels in progress_bar:
             inputs, labels = inputs.to(device), labels.to(device)
 
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            with autocast(device_type='cuda'):
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
 
             running_loss += loss.item() * inputs.size(0)
             # Compute accuracy
@@ -123,9 +132,9 @@ def main():
     WANDB_TAGS = config['wandb_tags']
 
     # *************  choosing the DATASET & MODEL *************
-    dataset_config = config["data"]['CIFAR10']
+    dataset_config = config["data"]['CIFAR100']
     modelConfig = config["model"]
-    specific_config = modelConfig['VIT_TINYV1']
+    specific_config = modelConfig['VIT_TINYV2']
     # **********************************************************
     
     # data
@@ -301,7 +310,7 @@ def main():
         notes = RUN_NOTES,
         resume="never",
         config=loggable_config,
-        allow_val_change=True,
+        allow_val_change=False,
         tags=WANDB_TAGS
         )
     
@@ -352,6 +361,7 @@ def main():
             best_epoch = epoch
             best_model_state = copy.deepcopy(model.state_dict())
             best_optimizer_state = copy.deepcopy(optimizer.state_dict())
+            best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
 
             epochs_without_improvement = 0
         else:
@@ -359,7 +369,7 @@ def main():
 
         # Early stopping condition
         if epochs_without_improvement >= EARLY_STOPPING_PATIENCE:
-            print(f"\nEarly stopping triggered. No improvement(delta={EARLY_STOPPING_IMPROVEMENT_DELTA}) in val_acc for {early_stop_patience} consecutive epochs.")
+            print(f"\nEarly stopping triggered. No improvement(delta={EARLY_STOPPING_IMPROVEMENT_DELTA}) in val_acc for {EARLY_STOPPING_PATIENCE} consecutive epochs.")
             break
 
         endTime = time.time()
@@ -379,15 +389,16 @@ def main():
         })
         # saving the latest best model/optimizer dict at 10 epochs interval
         checkpoint_manager.save_and_upload(
-            epoch,
+            best_epoch,
             best_model_state,
             best_optimizer_state,
+            best_scheduler_state,
             extra={"val_acc": best_val_acc,
                    "val_loss": best_val_loss,
                    "train_acc":corresponding_train_acc,
                    "train_loss":corresponding_train_loss
-                   }
-        )
+                }
+            )
 
     # gpu monitoring shutdown 
     nvmlShutdown()
