@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv1_cifar10_runV3"
-run_notes : "Augmentation Disabled - Data Augmentation & Mixup Disabled & Weight Decay disabled. epoch dec to 100"
+run : "vittinyv2_cifar10_runV3"
+run_notes : "Augmentation Disabled - Data Augmentation & Mixup Disabled & label smoothening disabled. only weight decay as regularization. epoch dec to 100"
 wandb_tags : ["ViT", "CIFAR10", "no augmentation"]
 
 data:
@@ -56,6 +56,15 @@ model:
     mlp_ratio: 3.0 # orignial paper 4.0
     dropout: 0.2
 
+  VIT_TINYV2:
+    name: 'vit_tiny_v2'
+    patch_size: 4
+    emb_size: 384 # 768 in original paper
+    depth: 8 # 12 in original paper
+    num_heads: 8 # 12 in original paper
+    mlp_ratio: 3.0 # orignial paper 4.0
+    dropout: 0.2
+
 training:
   mixup:
     enabled: false
@@ -64,7 +73,7 @@ training:
     label_smoothing_mixup: 0.0
   epochs: 100
   lr: 0.0003
-  weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
