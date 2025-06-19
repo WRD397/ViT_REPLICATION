@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv2_cifar100_runV0"
-run_notes : "Augmentation Disabled - Data Augmentation & Mixup Disabled & label smoothening disabled. only weight decay as regularization. epoch dec to 100"
-wandb_tags : ["ViT", "CIFAR100", "no augmentation"]
+run : "vittinyv2_cifar100_runV2"
+run_notes : "Augnentation enabled. mixup enabled, mixup label smoothening enabled. epoch 200"
+wandb_tags : ["ViT", "CIFAR100", "augmentation", "mixup", "label smoothening"]
 
 data:
   CIFAR10:
@@ -38,15 +38,17 @@ data:
     num_classes: 200
 
 model:
+  # test model
   VIT_TINYV0:
     name: 'vit_tiny_v0'
     patch_size: 4
-    emb_size: 64 # 768 in original paper
-    depth: 4 # 12 in original paper
+    emb_size: 32 # 768 in original paper
+    depth: 2 # 12 in original paper
     num_heads: 2 # 12 in original paper
     mlp_ratio: 1.0 # orignial paper 4.0
     dropout: 0.1
-  
+
+  # tiny - so far successful  
   VIT_TINYV1:
     name: 'vit_tiny_v1'
     patch_size: 4
@@ -56,6 +58,7 @@ model:
     mlp_ratio: 3.0 # orignial paper 4.0
     dropout: 0.2
 
+  # tiny - for testing the impact of augmentations
   VIT_TINYV2:
     name: 'vit_tiny_v2'
     patch_size: 4
@@ -67,11 +70,11 @@ model:
 
 training:
   mixup:
-    enabled: false
-    mixup_alpha: 0.0
-    cutmix_alpha: 0.0
-    label_smoothing_mixup: 0.0
-  epochs: 100
+    enabled: true
+    mixup_alpha: 0.2
+    cutmix_alpha: 0.2
+    label_smoothing_mixup: 0.1
+  epochs: 200
   lr: 0.0003
   weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
@@ -81,7 +84,7 @@ training:
   label_smoothing : 0.0 # increase to reduce overfitting
   es_patience : 10
   es_improv_delta : 0.001
-  augmentation_enabled : false
+  augmentation_enabled : true
 
 
 ## ********* RESOURCES ***********
