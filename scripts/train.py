@@ -30,16 +30,15 @@ from utils.checkpoints_manager import CheckpointManager
 from datetime import datetime as dt
 from torch.amp import GradScaler
 from torch.amp import autocast
+import gc
+import subprocess
 
-
-def train_one_epoch(model, loader, criterion, optimizer, device, class_count,
+def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
                     mixup_fn=None, scheduler_warmup_enabled=False, scheduler_warmup=None):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
-
-    scaler = GradScaler()
 
     progress_bar = tqdm(loader, desc="Training", leave=True)
     for  inputs, targets in progress_bar:
@@ -94,6 +93,7 @@ def validate(model, loader, criterion, device):
     model.eval()
     running_loss = 0.0
     correct = 0
+    top5_correct = 0
     total = 0
     progress_bar = tqdm(loader, desc="Validation", leave=True)
     with torch.no_grad():
@@ -108,19 +108,22 @@ def validate(model, loader, criterion, device):
             # Compute accuracy
             _, predicted = outputs.max(1)
             correct += predicted.eq(labels).sum().item()
+            # Top-5 Accuracy
+            _, top5_preds = outputs.topk(5, dim=1, largest=True, sorted=True)
+            top5_correct += sum([labels[i] in top5_preds[i] for i in range(len(labels))])
+
             total += labels.size(0)
 
-            # Avoid division by zero on first step
-            if total > 0:
-                avg_loss = running_loss / total
-                accuracy = 100. * correct / total
+            avg_loss = running_loss / total
+            accuracy = 100. * correct / total
+            top5_accuracy = 100. * top5_correct / total
 
-                progress_bar.set_postfix({
-                    "Loss": f"{avg_loss:.4f}",
-                    "Acc": f"{accuracy:.2f}%"
-                })
+            progress_bar.set_postfix({
+                "Loss": f"{avg_loss:.4f}",
+                "Acc": f"{accuracy:.2f}%"
+            })
                 
-    return avg_loss, accuracy
+    return avg_loss, accuracy, top5_accuracy
 
 def main():
     print('loading config')
@@ -262,6 +265,8 @@ def main():
         )
         scheduler_warmup_obj = scheduler_warmup
 
+    # scaler
+    scaler = GradScaler() 
 
     loggable_config = {
         "dataset": DATASET,
@@ -337,12 +342,15 @@ def main():
     for epoch in range(1,EPOCHS+1):
         print(f"\nEpoch {epoch}/{EPOCHS}")
 
-        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, device, class_count=NUM_CLASSES,
+        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, scaler, device,
                                                 mixup_fn=mixup_fn,
                                                 scheduler_warmup_enabled=scheduler_warmup_enabled_flag,
                                                 scheduler_warmup=scheduler_warmup_obj)
-        val_loss, val_acc = validate(model, val_loader, val_criterion, device)
+        val_loss, val_acc, val_acc_top5 = validate(model, val_loader, val_criterion, device)
         if USE_SCHEDULER : scheduler.step()
+
+        # monitoring learning rate variation
+        current_lr = optimizer.param_groups[0]['lr']
 
         # Monitor GPU usage
         mem_info = nvmlDeviceGetMemoryInfo(handle)
@@ -355,6 +363,7 @@ def main():
         import copy
         if val_acc > best_val_acc + EARLY_STOPPING_IMPROVEMENT_DELTA:
             best_val_acc = val_acc
+            best_val_acc_top5 = val_acc_top5
             best_val_loss = val_loss
             corresponding_train_acc = train_acc
             corresponding_train_loss = train_loss
@@ -362,6 +371,7 @@ def main():
             best_model_state = copy.deepcopy(model.state_dict())
             best_optimizer_state = copy.deepcopy(optimizer.state_dict())
             best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
+            best_scaler_state = copy.deepcopy(scaler.state_dict())
 
             epochs_without_improvement = 0
         else:
@@ -379,25 +389,33 @@ def main():
         seconds = int(elapsedTime % 60)
         print(f"Elapsed Time : {hours}h : {minutes}m : {seconds}s")
 
-        # Log to wandb
-        wandb.log({
+        #Log to wandb
+        wandb.log(
+        {
             "Epoch": epoch,
             "Train Loss": train_loss,
             "Train Acc": train_acc,
             "Val Loss": val_loss,
-            "Val Acc": val_acc
+            "Val Acc": val_acc,
+            "Val Acc (Top5)": val_acc_top5,
+            "LR (Scheduler Warmup)": current_lr
         })
-        # saving the latest best model/optimizer dict at 10 epochs interval
+
+
+        #saving the latest best model/optimizer dict at 10 epochs interval
         checkpoint_manager.save_and_upload(
-            best_epoch,
-            best_model_state,
-            best_optimizer_state,
-            best_scheduler_state,
+            current_epoch=epoch,
+            best_epoch=best_epoch,
+            model_state=best_model_state,
+            optimizer_state=best_optimizer_state,
+            scheduler_state=best_scheduler_state,
+            scaler_state = best_scaler_state,
             extra={"val_acc": best_val_acc,
+                   "val_acc_top5" : best_val_acc_top5,
                    "val_loss": best_val_loss,
                    "train_acc":corresponding_train_acc,
                    "train_loss":corresponding_train_loss
-                }
+                    }
             )
 
     # gpu monitoring shutdown 
@@ -406,7 +424,7 @@ def main():
     # saving the best state
     print('\n====== Model Performance =======')
     print(f"Train     Loss: {corresponding_train_loss:.4f},    Accuracy: {corresponding_train_acc:.2f}%")
-    print(f"Val(Best) Loss: {best_val_loss:.4f}, Accuracy: {best_val_acc:.2f}%")
+    print(f"Val(Best) Loss: {best_val_loss:.4f}, Accuracy: {best_val_acc:.2f}%, Top5 Accuracy: {best_val_acc_top5:.2f}%")
     print('====== Hardware Performance =======')
     print(f"GPU Used : {gpu_name}")
     print(f"Peak GPU Memory: {max_mem_used:.2f} MB")
@@ -417,17 +435,20 @@ def main():
     print(f"saving & uploading the best model state as till epoch : {epoch}")
     print(f"Best model Epoch : {best_epoch}")
     checkpoint_manager.save_checkpoint(
-        best_epoch,
-        best_model_state,
-        best_optimizer_state,
+        best_epoch=best_epoch,
+        model_state=best_model_state,
+        optimizer_state=best_optimizer_state,
+        scheduler_state=best_scheduler_state,
+        scaler_state = best_scaler_state,
         extra={"val_acc": best_val_acc,
-                   "val_loss": best_val_loss,
-                   "train_acc":corresponding_train_acc,
-                   "train_loss":corresponding_train_loss
+               "val_acc_top5" : best_val_acc_top5,
+                "val_loss": best_val_loss,
+                "train_acc":corresponding_train_acc,
+                "train_loss":corresponding_train_loss
                    }
     )
     checkpoint_manager.upload_to_wandb()
-    time.sleep(10)
+    time.sleep(5)
     checkpoint_manager.cleanup_old_wandb_artifacts()   
     print('-----------\n')
     print(f"\nTraining completed in: {hours}h : {minutes}m : {seconds}s\n\n")
@@ -436,14 +457,34 @@ def main():
     "trainAcc": corresponding_train_acc,
     "trainLoss": corresponding_train_loss,
     "valAcc": best_val_acc,
+    "valAccTop5": best_val_acc_top5,
     "valLoss": best_val_loss,
     "elapsedTime":f"{hours}h : {minutes}m : {seconds}s"
     }
-    # finishing the run
-    wandb.finish()
+    #finishing the run
+
+    #wandb syncing - syncing any possible leftovers
+    script_path = f"{ROOT_DIR_PATH}/scripts/wandb_sync.sh"
+
+    try:
+        result = subprocess.run(["bash", script_path], check=True, capture_output=True, text=True)
+
+        print("Script completed successfully.")
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
+        wandb.finish()
+
+    except subprocess.CalledProcessError as e:
+        print("Script failed with return code", e.returncode)
+        print("STDOUT:", e.stdout)
+        print("STDERR:", e.stderr)
+        wandb.finish()
+
+
+    
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
+    gc.collect()
     main()
-    

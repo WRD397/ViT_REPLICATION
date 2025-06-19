@@ -28,34 +28,39 @@ class CheckpointManager:
         self.checkpoint_filename = f"{self.run_name}_last_checkpoint.pth"
         self.checkpoint_path = os.path.join(self.save_dir, self.checkpoint_filename)
 
-    def save_and_upload(self, epoch: int, model_state, optimizer_state,scheduler_state, extra: Dict = {}):
+    def save_and_upload(self, current_epoch: int, best_epoch:int, model_state, optimizer_state,scheduler_state, scaler_state, extra: Dict = {}):
         """Save and upload the model if it's a checkpointing epoch."""
-        if (epoch % self.epoch_interval != 0): ...
+        if (current_epoch % self.epoch_interval != 0): ...
         else :
             print('start saving & loading the checkpoint as backup...')
-            self.save_checkpoint(epoch, model_state, optimizer_state,scheduler_state, extra)
+            self.save_checkpoint(best_epoch, model_state, optimizer_state,scheduler_state, scaler_state, extra)
             self.upload_to_wandb()
-            time.sleep(10)
+            time.sleep(5)
             self.cleanup_old_wandb_artifacts()
         return None
 
-    def save_checkpoint(self, epoch: int, model_state, optimizer_state, scheduler_state, extra: Dict):
+    def save_checkpoint(self, best_epoch: int, model_state, optimizer_state, scheduler_state, scaler_state, extra: Dict):
         checkpoint = {
-            "epoch": epoch,
+            "epoch": best_epoch,
             "model_state_dict": model_state,
             "optimizer_state_dict": optimizer_state,
             "scheduler_state_dict": scheduler_state,
+            "scaler_state_dict": scaler_state,
             **extra
         }
         torch.save(checkpoint, self.checkpoint_path)
-        print(f"Saved checkpoint at epoch {epoch} to {self.checkpoint_path}")
+        print(f"Saved checkpoint as on epoch(best epoch) {best_epoch} to {self.checkpoint_path}")
 
     def upload_to_wandb(self):
         artifact_name = f"{self.run_name}_checkpoint"
         artifact = wandb.Artifact(name=artifact_name, type="model")
         artifact.add_file(self.checkpoint_path)
-        wandb.log_artifact(artifact)
-        print(f"Uploaded {artifact_name} to W&B")
+        artifact_ref = wandb.log_artifact(artifact)
+        if artifact_ref is not None:
+            artifact_ref.wait()  # Wait for completion
+            print(f"Uploaded {artifact_name} to W&B")
+        else:
+            print(f"Upload failed or artifact not returned")
 
     def cleanup_old_wandb_artifacts(self):
         from wandb import Api
