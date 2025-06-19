@@ -135,7 +135,7 @@ def main():
     WANDB_TAGS = config['wandb_tags']
 
     # *************  choosing the DATASET & MODEL *************
-    dataset_config = config["data"]['CIFAR100']
+    dataset_config = config["data"]['TINYIMAGENET200']
     modelConfig = config["model"]
     specific_config = modelConfig['VIT_TINYV2']
     # **********************************************************
