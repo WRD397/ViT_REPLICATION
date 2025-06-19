@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv2_cifar100_runV2"
-run_notes : "Augnentation enabled. mixup enabled, mixup label smoothening enabled. epoch 200"
+run : "vittinyv2_tinyimg_runV0"
+run_notes : "Augnentation enabled. mixup enabled, mixup label smoothening enabled. epoch 300, wt decay 0.05"
 wandb_tags : ["ViT", "CIFAR100", "augmentation", "mixup", "label smoothening"]
 
 data:
@@ -28,7 +28,7 @@ data:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
     subset_enabled : true
-    subset_size : 50000 # 50% of total(100k training data)
+    subset_size : 20000 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -74,9 +74,9 @@ training:
     mixup_alpha: 0.2
     cutmix_alpha: 0.2
     label_smoothing_mixup: 0.1
-  epochs: 200
+  epochs: 300
   lr: 0.0003
-  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.05 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
