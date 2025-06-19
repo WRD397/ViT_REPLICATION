@@ -94,9 +94,9 @@ class DatasetLoader:
             return datasets.MNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'FASHIONMNIST':
             return datasets.FashionMNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
-        elif self.dataset_name == 'TINYIMAGENET':
+        elif self.dataset_name == 'TINYIMAGENET200':
             prepare_tiny_imagenet()
-            tinyiimg_cfg = data_cfg['TINYIMAGENET']
+            tinyiimg_cfg = data_cfg['TINYIMAGENET200']
             mean_tinyimg= tinyiimg_cfg['mean_aug']
             std_tinyimg  = tinyiimg_cfg['std_aug']
             subset_enabled = tinyiimg_cfg['subset_enabled']
