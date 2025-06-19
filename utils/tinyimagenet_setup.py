@@ -8,7 +8,7 @@ import urllib.request
 import zipfile
 import shutil
 
-DESTINATION_PATH =f'{ROOT_DIR_PATH}/data/TINYIMAGENET/'
+DESTINATION_PATH =f'{ROOT_DIR_PATH}/data/TINYIMAGENET200/'
 ZIP_NAME = 'tiny-imagenet-200.zip'
 
 
