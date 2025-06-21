@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv2_tinyimg_runV0"
-run_notes : "Augnentation enabled. mixup enabled, mixup label smoothening enabled. epoch 300, wt decay 0.05"
-wandb_tags : ["ViT", "CIFAR100", "augmentation", "mixup", "label smoothening"]
+run : "vittinyv0_cifar10_testV1"
+run_notes : "bare minimum setup to test the throughput calculation"
+wandb_tags : ["ViT", "CIFAR10", "test"]
 
 data:
   CIFAR10:
@@ -76,7 +76,7 @@ training:
     label_smoothing_mixup: 0.1
   epochs: 300
   lr: 0.0003
-  weight_decay: 0.05 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
@@ -86,6 +86,23 @@ training:
   es_improv_delta : 0.001
   augmentation_enabled : true
 
+training_dummy:
+  mixup:
+    enabled: false
+    mixup_alpha: 0.0
+    cutmix_alpha: 0.0
+    label_smoothing_mixup: 0.0
+  epochs: 25
+  lr: 0.001
+  weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  scheduler : false
+  scheduler_warmup : true
+  warmup_steps : 5
+  label_smoothing_enabled : false
+  label_smoothing : 0.0 # increase to reduce overfitting
+  es_patience : 10
+  es_improv_delta : 0.001
+  augmentation_enabled : false
 
 ## ********* RESOURCES ***********
 
