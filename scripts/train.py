@@ -138,9 +138,9 @@ def main():
     # *************  choosing the DATASET & MODEL *************
     
     dataset_config = config["data"]['TINYIMAGENET200']
-    modelConfig = config["model"]
-    specific_config = modelConfig['VIT_TINYV2']
-    
+    specific_config = config["model"]['VIT_TINYV2']
+    trainingConfig = config['training']
+
     # **********************************************************
     
     # data
@@ -170,7 +170,6 @@ def main():
     }    
 
     # training config
-    trainingConfig = config['training']
     LEARNING_RATE = trainingConfig['lr']
     EPOCHS = trainingConfig['epochs']
     WEIGHT_DECAY = trainingConfig['weight_decay']
@@ -392,7 +391,7 @@ def main():
         seconds = int(elapsedTime % 60)
         print(f"Elapsed Time : {hours}h : {minutes}m : {seconds}s")
 
-        if epoch%20 == 0:
+        if epoch%5 == 0:
             wandb.log({
                     "Time/Epoch (min)": int((elapsedTime/epoch)/60)
                 })
@@ -435,7 +434,7 @@ def main():
     print(f"Peak GPU Memory: {max_mem_used:.2f} MB")
     print(f"Peak GPU Utilization: {max_gpu_util}%")
     print(f"Peak Memory Bandwidth Utilization: {max_mem_util}%")
-    throughput = measure_throughput(model,device)
+    throughput = measure_throughput(model,device,IMAGE)
     print(f"Throughput: {throughput}")
     print(f"average time per epoch: {int((elapsedTime/epoch)/60)}")
     print('\n\n-----------')
@@ -466,7 +465,7 @@ def main():
     "valAcc": best_val_acc,
     "valAccTop5": best_val_acc_top5,
     "valLoss": best_val_loss,
-    "param": round((total_params / 1e6),2),
+    "param(m)": round((total_params / 1e6),2),
     "throughput": throughput,
     "avgTime/Epoch(min)": int((elapsedTime/epoch)/60),
     "elapsedTime":f"{hours}h : {minutes}m : {seconds}s",
