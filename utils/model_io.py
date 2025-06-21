@@ -2,6 +2,7 @@ from pathlib import Path
 import torch
 import os 
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 ROOT_DIR_PATH = os.environ.get('ROOT_PATH')
@@ -18,3 +19,30 @@ def save_model(model_state, model_name, epoch, val_acc):
     save_dir.mkdir(parents=True, exist_ok=True)
     filename = f"epoch{epoch}_valacc{val_acc:.2f}.pth"
     torch.save(model_state, save_dir / filename)
+
+def measure_throughput(model, device):
+    BATCH_SIZE = 128
+    IMAGE_SIZE = 224
+    CHANNELS = 3
+    NUM_STEPS = 100
+    NUM_WARMUP = 10
+
+    model.to(device)
+    model.eval()
+
+    dummy_input = torch.randn(BATCH_SIZE, CHANNELS, IMAGE_SIZE, IMAGE_SIZE).to(device)
+    #warmup
+    for _ in range(NUM_WARMUP):
+        _ = model(dummy_input)
+
+    #benchmark
+    torch.cuda.synchronize()
+    start = time.time()
+    for _ in range(NUM_STEPS):
+        _ = model(dummy_input)
+        torch.cuda.synchronize()
+    end = time.time()
+    total_images = BATCH_SIZE * NUM_STEPS
+    elapsed_time = end - start
+    throughput = round(total_images / elapsed_time, 2)
+    return throughput
