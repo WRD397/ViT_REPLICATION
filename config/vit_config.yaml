@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv0_cifar10_testV1"
-run_notes : "bare minimum setup to test the throughput calculation"
-wandb_tags : ["ViT", "CIFAR10", "test"]
+run : "vittinyv2_tinyimagenet200_runv0"
+run_notes : "epoch300 - mixup,aug enabled. no distillation"
+wandb_tags : ["ViT", "TINYIMAGENET200", "mixup", "augmentation"]
 
 data:
   CIFAR10:
