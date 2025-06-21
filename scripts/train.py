@@ -9,10 +9,9 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from tqdm import tqdm
 from model.vit import VisionTransformerSmall
-from utils.model_io import save_model
+from utils.model_io import measure_throughput
 from utils.config_loader import load_config
 from utils.data_loader import DatasetLoader
 from pynvml import (
@@ -32,6 +31,7 @@ from torch.amp import GradScaler
 from torch.amp import autocast
 import gc
 import subprocess
+
 
 def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
                     mixup_fn=None, scheduler_warmup_enabled=False, scheduler_warmup=None):
@@ -126,6 +126,7 @@ def validate(model, loader, criterion, device):
     return avg_loss, accuracy, top5_accuracy
 
 def main():
+    
     print('loading config')
     # Load config
     config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
@@ -135,9 +136,11 @@ def main():
     WANDB_TAGS = config['wandb_tags']
 
     # *************  choosing the DATASET & MODEL *************
+    
     dataset_config = config["data"]['TINYIMAGENET200']
     modelConfig = config["model"]
     specific_config = modelConfig['VIT_TINYV2']
+    
     # **********************************************************
     
     # data
@@ -319,7 +322,7 @@ def main():
         tags=WANDB_TAGS
         )
     
-    wandb.define_metric("*", summary="none")  # suppress all
+    wandb.define_metric("*", summary="none")
     checkpoint_manager = CheckpointManager()
 
     # monitors initialization
@@ -389,7 +392,10 @@ def main():
         seconds = int(elapsedTime % 60)
         print(f"Elapsed Time : {hours}h : {minutes}m : {seconds}s")
 
-        #Log to wandb
+        if epoch%20 == 0:
+            wandb.log({
+                    "Time/Epoch (min)": int((elapsedTime/epoch)/60)
+                })
         wandb.log(
         {
             "Epoch": epoch,
@@ -400,7 +406,6 @@ def main():
             "Val Acc (Top5)": val_acc_top5,
             "LR (Scheduler Warmup)": current_lr
         })
-
 
         #saving the latest best model/optimizer dict at 10 epochs interval
         checkpoint_manager.save_and_upload(
@@ -430,7 +435,9 @@ def main():
     print(f"Peak GPU Memory: {max_mem_used:.2f} MB")
     print(f"Peak GPU Utilization: {max_gpu_util}%")
     print(f"Peak Memory Bandwidth Utilization: {max_mem_util}%")
-
+    throughput = measure_throughput(model,device)
+    print(f"Throughput: {throughput}")
+    print(f"average time per epoch: {int((elapsedTime/epoch)/60)}")
     print('\n\n-----------')
     print(f"saving & uploading the best model state as till epoch : {epoch}")
     print(f"Best model Epoch : {best_epoch}")
@@ -459,9 +466,13 @@ def main():
     "valAcc": best_val_acc,
     "valAccTop5": best_val_acc_top5,
     "valLoss": best_val_loss,
-    "elapsedTime":f"{hours}h : {minutes}m : {seconds}s"
+    "param": round((total_params / 1e6),2),
+    "throughput": throughput,
+    "avgTime/Epoch(min)": int((elapsedTime/epoch)/60),
+    "elapsedTime":f"{hours}h : {minutes}m : {seconds}s",
+    
+
     }
-    #finishing the run
 
     #wandb syncing - syncing any possible leftovers
     script_path = f"{ROOT_DIR_PATH}/scripts/wandb_sync.sh"
@@ -479,9 +490,6 @@ def main():
         print("STDOUT:", e.stdout)
         print("STDERR:", e.stderr)
         wandb.finish()
-
-
-    
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
