@@ -20,9 +20,9 @@ def save_model(model_state, model_name, epoch, val_acc):
     filename = f"epoch{epoch}_valacc{val_acc:.2f}.pth"
     torch.save(model_state, save_dir / filename)
 
-def measure_throughput(model, device):
+def measure_throughput(model, device, image_size):
     BATCH_SIZE = 128
-    IMAGE_SIZE = 224
+    IMAGE_SIZE = image_size
     CHANNELS = 3
     NUM_STEPS = 100
     NUM_WARMUP = 10
