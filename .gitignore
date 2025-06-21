@@ -24,3 +24,4 @@ extras/
 
 #wandb logs
 wandb/
+wandb_runids/
