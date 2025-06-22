@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv2_tinyimagenet200_runv0"
-run_notes : "epoch300 - mixup,aug enabled. no distillation"
-wandb_tags : ["ViT", "TINYIMAGENET200", "mixup", "augmentation"]
+run : "vittinyv0_tinyimagenet200_testv0"
+run_notes : "testting with a bare min model - should overfit"
+wandb_tags : ["ViT", "TINYIMAGENET200", "test"]
 
 data:
   CIFAR10:
@@ -28,7 +28,7 @@ data:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
     subset_enabled : true
-    subset_size : 20000 # 20% of total(100k training data)
+    subset_size : 100 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -46,7 +46,7 @@ model:
     depth: 2 # 12 in original paper
     num_heads: 2 # 12 in original paper
     mlp_ratio: 1.0 # orignial paper 4.0
-    dropout: 0.1
+    dropout: 0.0
 
   # tiny - so far successful  
   VIT_TINYV1:
@@ -96,12 +96,12 @@ training_dummy:
   lr: 0.001
   weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
-  scheduler_warmup : true
-  warmup_steps : 5
+  scheduler_warmup : false
+  warmup_steps : 0
   label_smoothing_enabled : false
   label_smoothing : 0.0 # increase to reduce overfitting
-  es_patience : 10
-  es_improv_delta : 0.001
+  es_patience : 10000000
+  es_improv_delta : 0.00000001
   augmentation_enabled : false
 
 ## ********* RESOURCES ***********
