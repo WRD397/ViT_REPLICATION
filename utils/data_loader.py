@@ -116,7 +116,7 @@ class DatasetLoader:
                 transforms.ToTensor(),
                 transforms.Normalize(mean_tinyimg, std_tinyimg)
             ])
-            transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
+            # transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
 
             if AUG_ENABLED:
                 transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
@@ -156,20 +156,21 @@ class DatasetLoader:
 
 
 if __name__ == "__main__":
+    pass
     # sample code
     # loading cifar100
-    cifar100_config = data_cfg['CIFAR100']
-    DATASET = cifar100_config["dataset"]
-    DATA_DIR = cifar100_config["data_path"]
-    BATCH = cifar100_config["batch_size"]
-    NUM_WORKERS = cifar100_config["num_workers"]
-    IMAGE = cifar100_config["img_size"]
+    # cifar100_config = data_cfg['CIFAR100']
+    # DATASET = cifar100_config["dataset"]
+    # DATA_DIR = cifar100_config["data_path"]
+    # BATCH = cifar100_config["batch_size"]
+    # NUM_WORKERS = cifar100_config["num_workers"]
+    # IMAGE = cifar100_config["img_size"]
 
-    # loading data
-    loader = DatasetLoader(dataset_name=DATASET,
-                            data_dir=DATA_DIR,
-                            batch_size=BATCH,
-                            num_workers=NUM_WORKERS,
-                            img_size=IMAGE)
-    train_loader, test_loader = loader.get_loaders()
-    print(f"Train batches: {len(train_loader)}, Test batches: {len(test_loader)}")
+    # # loading data
+    # loader = DatasetLoader(dataset_name=DATASET,
+    #                         data_dir=DATA_DIR,
+    #                         batch_size=BATCH,
+    #                         num_workers=NUM_WORKERS,
+    #                         img_size=IMAGE)
+    # train_loader, test_loader = loader.get_loaders()
+    # print(f"Train batches: {len(train_loader)}, Test batches: {len(test_loader)}")
