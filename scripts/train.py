@@ -59,7 +59,6 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
         scaler.update()                
 
         if scheduler_warmup_enabled:
-            if scheduler_warmup is None : raise Exception(f'scheduler warmup is enabled, but no scheduler object has been passed in train_one_epoch function')
             scheduler_warmup.step()
 
         running_loss += loss.item() * inputs.size(0)
@@ -139,7 +138,7 @@ def main():
     
     dataset_config = config["data"]['TINYIMAGENET200']
     specific_config = config["model"]['VIT_TINYV2']
-    trainingConfig = config['training']
+    trainingConfig = config['training_dummy']
 
     # **********************************************************
     
@@ -372,7 +371,9 @@ def main():
             best_epoch = epoch
             best_model_state = copy.deepcopy(model.state_dict())
             best_optimizer_state = copy.deepcopy(optimizer.state_dict())
-            best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
+            if USE_SCHEDULER: best_scheduler_state = copy.deepcopy(scheduler.state_dict())
+            elif USE_SCHEDULER_WARMUP : best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
+            else : best_scheduler_state = None
             best_scaler_state = copy.deepcopy(scaler.state_dict())
 
             epochs_without_improvement = 0
