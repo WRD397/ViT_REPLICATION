@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from model.vit import VisionTransformerSmall
+from model.vit_custom import VisionTransformerTiny
 from utils.model_io import measure_throughput
 from utils.config_loader import load_config
 from utils.data_loader import DatasetLoader
@@ -137,7 +138,7 @@ def main():
     # *************  choosing the DATASET & MODEL *************
     
     dataset_config = config["data"]['TINYIMAGENET200']
-    specific_config = config["model"]['VIT_TINYV2']
+    specific_config = config["model"]['VIT_TINYV3']
     trainingConfig = config['training_dummy']
 
     # **********************************************************
@@ -165,7 +166,10 @@ def main():
         'MLP_RATIO' : specific_config['mlp_ratio'],
         'DROPOUT' : specific_config['dropout'],
         'NUM_CLASSES' : NUM_CLASSES,
-        'DEPTH' : specific_config['depth']
+        'DEPTH' : specific_config['depth'],
+        'QKV_BIAS':specific_config['qkv_bias'],
+        'ATTN_DROP_RATE': specific_config['attn_drop_rate'],
+        'DROP_PATH_RATE': specific_config['drop_path_rate']
     }    
 
     # training config
@@ -219,7 +223,8 @@ def main():
 
     # loading data
     print(f'loading dataset : {DATASET}')
-    loader = DatasetLoader(dataset_name=DATASET,
+    loader = DatasetLoader(training_config=trainingConfig,
+                            dataset_name=DATASET,
                             data_dir=DATA_DIR,
                             batch_size=BATCH,
                             num_workers=NUM_WORKERS,
@@ -232,7 +237,8 @@ def main():
         break
     
     # loading model
-    model = VisionTransformerSmall(**modelConfigDict).to(device)
+    #model = VisionTransformerSmall(**modelConfigDict).to(device)
+    model = VisionTransformerTiny(**modelConfigDict).to(device)
     # logging model parameters and config
     print('Data Configuration:')
     for k, v in dataset_config.items():
@@ -285,6 +291,8 @@ def main():
         "heads": specific_config["num_heads"],
         "mlp_ratio": specific_config["mlp_ratio"],
         "dropout":specific_config["dropout"],
+        "drop_path_rate":specific_config["drop_path_rate"],
+        "attn_drop_rate": specific_config['attn_drop_rate'],
 
         "epochs": config["training"]["epochs"],
         "lr": config["training"]["lr"],
@@ -452,7 +460,7 @@ def main():
                 "val_loss": best_val_loss,
                 "train_acc":corresponding_train_acc,
                 "train_loss":corresponding_train_loss
-                   }
+                }
     )
     checkpoint_manager.upload_to_wandb()
     time.sleep(5)
@@ -470,7 +478,6 @@ def main():
     "throughput": throughput,
     "avgTime/Epoch(min)": int((elapsedTime/epoch)/60),
     "elapsedTime":f"{hours}h : {minutes}m : {seconds}s",
-    
 
     }
 
