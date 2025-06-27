@@ -68,6 +68,19 @@ model:
     mlp_ratio: 3.0 # orignial paper 4.0
     dropout: 0.2
 
+  # tiny - using custom attention
+  VIT_TINYV3:
+    name: 'vit_tiny_v3'
+    patch_size: 16
+    emb_size: 192
+    depth: 12
+    num_heads: 3
+    mlp_ratio: 4.0 
+    dropout: 0.0
+    attn_drop_rate: 0.0
+    drop_path_rate: 0.1
+    qkv_bias: True
+
 training:
   mixup:
     enabled: true
@@ -85,6 +98,7 @@ training:
   es_patience : 10
   es_improv_delta : 0.001
   augmentation_enabled : true
+  apply_class_balance : false #always false for actual training
 
 training_dummy:
   mixup:
@@ -92,8 +106,8 @@ training_dummy:
     mixup_alpha: 0.0
     cutmix_alpha: 0.0
     label_smoothing_mixup: 0.0
-  epochs: 25
-  lr: 0.001
+  epochs: 50
+  lr: 0.0003
   weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : false
@@ -103,6 +117,7 @@ training_dummy:
   es_patience : 10000000
   es_improv_delta : 0.00000001
   augmentation_enabled : false
+  apply_class_balance : true
 
 ## ********* RESOURCES ***********
 
