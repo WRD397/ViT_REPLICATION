@@ -6,12 +6,13 @@ ROOT_DIR_PATH = os.environ.get('ROOT_PATH')
 sys.path.append(os.path.abspath(ROOT_DIR_PATH))  # Adds root directory to sys.path
 import torch
 from pathlib import Path
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from utils.config_loader import load_config
 from torchvision.datasets import ImageFolder
 from utils.tinyimagenet_setup import prepare_tiny_imagenet
+from collections import defaultdict
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
@@ -19,13 +20,14 @@ config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
 data_cfg = config["data"]
 
 class DatasetLoader:
-    def __init__(self, dataset_name, data_dir,
+    def __init__(self, training_config, dataset_name, data_dir,
                  batch_size, num_workers, img_size):
         self.dataset_name = dataset_name.upper()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.img_size = img_size
+        self.training_config = training_config
 
         self.transform = transforms.Compose([
             transforms.Resize((self.img_size, self.img_size)),
@@ -34,8 +36,8 @@ class DatasetLoader:
             else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-    def get_dataset(self, train=True, transform=None):
-        AUG_ENABLED = config['training']['augmentation_enabled']
+    def get_dataset(self, train=True):
+        AUG_ENABLED = self.training_config['augmentation_enabled']
         if self.dataset_name == 'CIFAR10':
             #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
             # CIFAR-10 mean & std
@@ -63,7 +65,6 @@ class DatasetLoader:
                 transform_cifar10 = val_transform_cifar10
             
             return datasets.CIFAR10(root=self.data_dir, train=train, download=True, transform=transform_cifar10)
-        
         elif self.dataset_name == 'CIFAR100':
             cifar100_cfg = data_cfg['CIFAR100']
             mean_cifar100 = cifar100_cfg['mean_aug']
@@ -116,8 +117,6 @@ class DatasetLoader:
                 transforms.ToTensor(),
                 transforms.Normalize(mean_tinyimg, std_tinyimg)
             ])
-            # transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
-
             if AUG_ENABLED:
                 transform_tinyimg = train_transform_tinyimg if train else val_transform_tinyimg
             else :
@@ -126,15 +125,32 @@ class DatasetLoader:
             split_folder = "train" if train else "val"
             dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_tinyimg)
-            if subset_enabled:
-                if train:
-                    subset_size = subset_size
-                    indices = torch.randperm(len(dataset))[:subset_size]
-                    subset = torch.utils.data.Subset(dataset, indices)
-                    subset.classes = dataset.classes
-                    subset.class_to_idx = dataset.class_to_idx
-                    subset.targets = [dataset.targets[i] for i in indices] 
-                    dataset = subset           
+            if train:
+                if subset_enabled:
+                    APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
+
+                    if APPLY_CLASS_BALANCE:
+                        NUM_CLASSES = 20
+                        SAMPLES_PER_CLASS = 5
+                        class_to_indices = defaultdict(list)
+                        for idx, (_, label) in enumerate(dataset):
+                            class_to_indices[label].append(idx)
+
+                        subset_indices = []
+                        for label in sorted(class_to_indices.keys())[:NUM_CLASSES]:
+                            subset_indices.extend(class_to_indices[label][:SAMPLES_PER_CLASS])
+
+                        subset_dataset = Subset(dataset, subset_indices)
+                        dataset=subset_dataset
+                    else :
+                        subset_size = subset_size
+                        indices = torch.randperm(len(dataset))[:subset_size]
+                        subset = torch.utils.data.Subset(dataset, indices)
+                        subset.classes = dataset.classes
+                        subset.class_to_idx = dataset.class_to_idx
+                        subset.targets = [dataset.targets[i] for i in indices] 
+                        dataset = subset
+
             return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
@@ -150,8 +166,15 @@ class DatasetLoader:
         
         print(f'training size  : {len(train_loader.dataset)}')
         print(f'validation size : {len(test_loader.dataset)}')
-        print(f"Classes: {len(train_dataset.classes)}")
-        print(f"Sample label: {train_dataset[0][1]}")
+        if isinstance(train_dataset, Subset):
+            subset_labels = [train_dataset.dataset[idx][1] for idx in train_dataset.indices]
+            unique_labels = sorted(set(subset_labels))
+            print(f"Subset contains {len(unique_labels)} unique classes")
+            print(f"Sample label: {train_dataset.dataset[train_dataset.indices[0]][1]}")
+        else:
+            print(f"Classes: {len(train_dataset.classes)}")
+            print(f"Sample label: {train_dataset[0][1]}")
+
         return train_loader, test_loader
 
 
