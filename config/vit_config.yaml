@@ -28,7 +28,7 @@ data:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
     subset_enabled : true
-    subset_size : 100 # 20% of total(100k training data)
+    subset_size : 20000 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
