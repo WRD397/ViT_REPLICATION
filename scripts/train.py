@@ -137,7 +137,7 @@ def main():
 
     # *************  choosing the DATASET & MODEL *************
     
-    dataset_config = config["data"]['CIFAR10']
+    dataset_config = config["data"]['CIFAR100']
     specific_config = config["model"]['VIT_TINYV3']
     trainingConfig = config['training']
 
