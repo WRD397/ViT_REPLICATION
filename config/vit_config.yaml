@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_cifar100_runv0"
-run_notes : "reduced mixup 0.1, small weight decay 0.01, patch 8, es patience inc to 20 - tackling underfitting"
-wandb_tags : ["ViT", "CIFAR100", "custom model", "drop path"]
+run : "vittinyv3_tinyimagenet_runv0"
+run_notes : "running the so far successful model of cifar10 - descent performance in cifar100 as well."
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "drop path"]
 
 data:
   CIFAR10:
