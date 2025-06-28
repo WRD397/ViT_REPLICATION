@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv0_tinyimagenet200_testv0"
-run_notes : "testting with a bare min model - should overfit"
-wandb_tags : ["ViT", "TINYIMAGENET200", "test"]
+run : "vittinyv3_cifar10_runv2"
+run_notes : "cutmix reduced to 0.1, weight decay reduced to 0.01, patch reduced to 8, es patience inc to 20 from 10 - tackling underfitting"
+wandb_tags : ["ViT", "CIFAR10", "custom model", "drop path"]
 
 data:
   CIFAR10:
@@ -71,10 +71,10 @@ model:
   # tiny - using custom attention
   VIT_TINYV3:
     name: 'vit_tiny_v3'
-    patch_size: 16
-    emb_size: 192
+    patch_size: 8
+    emb_size: 384
     depth: 12
-    num_heads: 3
+    num_heads: 6
     mlp_ratio: 4.0 
     dropout: 0.0
     attn_drop_rate: 0.0
@@ -85,17 +85,17 @@ training:
   mixup:
     enabled: true
     mixup_alpha: 0.2
-    cutmix_alpha: 0.2
+    cutmix_alpha: 0.1
     label_smoothing_mixup: 0.1
-  epochs: 300
+  epochs: 200
   lr: 0.0003
-  weight_decay: 0.03 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.01  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
   label_smoothing_enabled : false
   label_smoothing : 0.0 # increase to reduce overfitting
-  es_patience : 10
+  es_patience : 20
   es_improv_delta : 0.001
   augmentation_enabled : true
   apply_class_balance : false #always false for actual training
