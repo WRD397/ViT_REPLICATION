@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet_runv0"
-run_notes : "running the so far successful model of cifar10 - descent performance in cifar100 as well."
+run : "vittinyv3_tinyimagenet_runv1"
+run_notes : "learning slow - overfitting - cutmix-up-0.2, label smooth -up-0.2, weight decay-up-0.03, droppath-up-0.3, subset-up-50k"
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "drop path"]
 
 data:
@@ -28,7 +28,7 @@ data:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
     subset_enabled : true
-    subset_size : 20000 # 20% of total(100k training data)
+    subset_size : 50000 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -78,18 +78,18 @@ model:
     mlp_ratio: 4.0 
     dropout: 0.0
     attn_drop_rate: 0.0
-    drop_path_rate: 0.1
+    drop_path_rate: 0.3
     qkv_bias: True
 
 training:
   mixup:
     enabled: true
     mixup_alpha: 0.2
-    cutmix_alpha: 0.1
-    label_smoothing_mixup: 0.1
+    cutmix_alpha: 0.2
+    label_smoothing_mixup: 0.2
   epochs: 200
   lr: 0.0003
-  weight_decay: 0.01  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
