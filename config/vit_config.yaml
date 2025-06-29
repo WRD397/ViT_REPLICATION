@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet_runv3"
-run_notes : "more overfitting - enabling back rand augment one by one - but no mixup"
+run : "vittinyv3_tinyimagenet_runv4"
+run_notes : "overfitting is getting reduced with more n more augmentation. Increasing the augmentation - mixup enabled 3.0, 2.0 - dropout inc to 0,1"
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "no mixup", "slight augmentation"]
 
 data:
@@ -76,25 +76,25 @@ model:
     depth: 12
     num_heads: 6
     mlp_ratio: 4.0 
-    dropout: 0.0
+    dropout: 0.1
     attn_drop_rate: 0.0
     drop_path_rate: 0.3
     qkv_bias: True
 
 training:
   mixup:
-    enabled: false
-    mixup_alpha: 0.0
-    cutmix_alpha: 0.0
-    label_smoothing_mixup: 0.0
+    enabled: true
+    mixup_alpha: 3.0
+    cutmix_alpha: 2.0
+    label_smoothing_mixup: 0.2
   epochs: 200
   lr: 0.0003
   weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
-  label_smoothing_enabled : true
-  label_smoothing : 0.2 # increase to reduce overfitting
+  label_smoothing_enabled : false
+  label_smoothing : 0.0 # increase to reduce overfitting
   es_patience : 20
   es_improv_delta : 0.001
   augmentation_enabled : true
