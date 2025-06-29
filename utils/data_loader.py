@@ -12,7 +12,10 @@ import torchvision.datasets as datasets
 from utils.config_loader import load_config
 from torchvision.datasets import ImageFolder
 from utils.tinyimagenet_setup import prepare_tiny_imagenet
+from utils.caltech_setup import prepare_caltech256
 from collections import defaultdict
+import os
+import shutil
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
@@ -151,6 +154,62 @@ class DatasetLoader:
                         subset.targets = [dataset.targets[i] for i in indices] 
                         dataset = subset
 
+            return dataset
+        elif self.dataset_name == 'CALTECH256':
+            APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
+            prepare_caltech256()
+            caltech_cfg = data_cfg['CALTECH256']
+            mean_caltech = caltech_cfg['mean_aug']
+            std_caltech = caltech_cfg['std_aug']
+            subset_enabled = caltech_cfg.get('subset_enabled')
+            subset_size = caltech_cfg.get('subset_size')
+
+            train_transform_caltech = transforms.Compose([
+                transforms.RandomResizedCrop(self.img_size, scale=(0.6, 1.0)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandAugment(num_ops=2, magnitude=9),
+                transforms.ToTensor(),
+                transforms.Normalize(mean_caltech, std_caltech),
+            ])
+            val_transform_caltech = transforms.Compose([
+                transforms.Resize((self.img_size, self.img_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean_caltech, std_caltech)
+            ])
+
+            transform_caltech = (
+                train_transform_caltech if (train and AUG_ENABLED) else val_transform_caltech
+            )
+
+            split_folder = "train" if train else "val"
+            clutter_dir = os.path.join(self.data_dir, split_folder, '257.clutter')
+            if os.path.exists(clutter_dir):
+                print("Removing clutter class...")
+                shutil.rmtree(clutter_dir)
+            dataset_path = os.path.join(self.data_dir, split_folder)
+            dataset = ImageFolder(root=dataset_path, transform=transform_caltech)
+
+            if train and subset_enabled:
+                indices = torch.randperm(len(dataset))[:subset_size]
+                subset = Subset(dataset, indices)
+                subset.classes = dataset.classes
+                subset.class_to_idx = dataset.class_to_idx
+                subset.targets = [dataset.targets[i] for i in indices]
+                dataset = subset
+                
+            if train and APPLY_CLASS_BALANCE:
+                NUM_CLASSES = 10
+                SAMPLES_PER_CLASS = 10
+                class_to_indices = defaultdict(list)
+                for idx, (_, label) in enumerate(dataset):
+                    class_to_indices[label].append(idx)
+
+                subset_indices = []
+                for label in sorted(class_to_indices.keys())[:NUM_CLASSES]:
+                    subset_indices.extend(class_to_indices[label][:SAMPLES_PER_CLASS])
+
+                subset_dataset = Subset(dataset, subset_indices)
+                dataset=subset_dataset
             return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
