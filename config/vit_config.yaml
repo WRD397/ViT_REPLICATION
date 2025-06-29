@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_runv0"
-run_notes : "using the last tinyimagenet200 model config"
+run : "vittinyv3_caltech256_runv1"
+run_notes : "cutmix/mixup reduced to 0.2 and 0.4. attn_drop_rate 0.1, augmentation inc - affinity added."
 wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "augmentation"]
 
 data:
@@ -89,15 +89,15 @@ model:
     num_heads: 6
     mlp_ratio: 4.0 
     dropout: 0.1
-    attn_drop_rate: 0.0
+    attn_drop_rate: 0.1
     drop_path_rate: 0.3
     qkv_bias: True
 
 training:
   mixup:
     enabled: true
-    mixup_alpha: 3.0
-    cutmix_alpha: 2.0
+    mixup_alpha: 0.2
+    cutmix_alpha: 0.4
     label_smoothing_mixup: 0.2
   epochs: 200
   lr: 0.0003
