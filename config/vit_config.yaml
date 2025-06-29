@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet_runv4"
-run_notes : "overfitting is getting reduced with more n more augmentation. Increasing the augmentation - mixup enabled 3.0, 2.0 - dropout inc to 0,1"
-wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "no mixup", "slight augmentation"]
+run : "vittinyv3_caltech256_runv0"
+run_notes : "using the so far successful cifar10 model config"
+wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "augmentation"]
 
 data:
   CIFAR10:
@@ -26,7 +26,7 @@ data:
     num_classes: 100
   TINYIMAGENET200:
     dataset : 'TINYIMAGENET200'
-    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET200'
     subset_enabled : true
     subset_size : 50000 # 20% of total(100k training data)
     channels: 3
@@ -36,6 +36,18 @@ data:
     mean_aug: [0.485, 0.456, 0.406]
     std_aug: [0.229, 0.224, 0.225]
     num_classes: 200
+  CALTECH256:
+    dataset : 'CALTECH256'
+    data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CALTECH256'
+    subset_enabled : false
+    subset_size : 5000 # 20% of total(100k training data)
+    channels: 3
+    batch_size: 128
+    num_workers: 8
+    img_size: 224
+    mean_aug: [0.5531906485557556, 0.5342377424240112, 0.5071621537208557]
+    std_aug: [0.23687367141246796, 0.2358572781085968, 0.2385127693414688]
+    num_classes: 256
 
 model:
   # test model
