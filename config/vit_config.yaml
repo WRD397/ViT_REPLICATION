@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet_runv1"
+run : "vittinyv3_tinyimagenet_runv2"
 run_notes : "val acc stuck at 40. disabling mixup, probably an overkill. recuded augmentation - only random crop"
-wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "drop path"]
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "no mixup", "slight augmentation"]
 
 data:
   CIFAR10:
