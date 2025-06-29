@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_tinyimagenet_runv1"
-run_notes : "learning slow - overfitting - cutmix-up-0.2, label smooth -up-0.2, weight decay-up-0.03, droppath-up-0.3, subset-up-50k"
+run_notes : "val acc stuck at 40. disabling mixup, probably an overkill. recuded augmentation - only random crop"
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "drop path"]
 
 data:
@@ -71,7 +71,7 @@ model:
   # tiny - using custom attention
   VIT_TINYV3:
     name: 'vit_tiny_v3'
-    patch_size: 8
+    patch_size: 16
     emb_size: 384
     depth: 12
     num_heads: 6
@@ -83,18 +83,18 @@ model:
 
 training:
   mixup:
-    enabled: true
-    mixup_alpha: 0.2
-    cutmix_alpha: 0.2
-    label_smoothing_mixup: 0.2
+    enabled: false
+    mixup_alpha: 0.0
+    cutmix_alpha: 0.0
+    label_smoothing_mixup: 0.0
   epochs: 200
   lr: 0.0003
   weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
-  label_smoothing_enabled : false
-  label_smoothing : 0.0 # increase to reduce overfitting
+  label_smoothing_enabled : true
+  label_smoothing : 0.2 # increase to reduce overfitting
   es_patience : 20
   es_improv_delta : 0.001
   augmentation_enabled : true
