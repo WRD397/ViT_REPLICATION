@@ -167,9 +167,11 @@ class DatasetLoader:
             train_transform_caltech = transforms.Compose([
                 transforms.RandomResizedCrop(self.img_size, scale=(0.6, 1.0)),
                 transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.9, 1.1)),
                 transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_caltech, std_caltech),
+                transforms.RandomErasing(p=0.25, scale=(0.02, 0.1), ratio=(0.3, 3.3), value='random')
             ])
             val_transform_caltech = transforms.Compose([
                 transforms.Resize((self.img_size, self.img_size)),
@@ -196,7 +198,7 @@ class DatasetLoader:
                 subset.class_to_idx = dataset.class_to_idx
                 subset.targets = [dataset.targets[i] for i in indices]
                 dataset = subset
-                
+
             if train and APPLY_CLASS_BALANCE:
                 NUM_CLASSES = 10
                 SAMPLES_PER_CLASS = 10
