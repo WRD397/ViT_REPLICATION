@@ -137,7 +137,7 @@ def main():
 
     # *************  choosing the DATASET & MODEL *************
     
-    dataset_config = config["data"]['TINYIMAGENET200']
+    dataset_config = config["data"]['CALTECH256']
     specific_config = config["model"]['VIT_TINYV3']
     trainingConfig = config['training']
 
