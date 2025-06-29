@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_caltech256_runv0"
-run_notes : "using the so far successful cifar10 model config"
+run_notes : "using the last tinyimagenet200 model config"
 wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "augmentation"]
 
 data:
