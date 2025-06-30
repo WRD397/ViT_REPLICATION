@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_runv1"
-run_notes : "cutmix/mixup reduced to 0.2 and 0.4. attn_drop_rate 0.1, augmentation inc - affinity added."
-wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "augmentation"]
+run : "vittinyv3_caltech256_runv2"
+run_notes : "cutmix/mixup reduced further to tackle underperformance - train/val both stuck at 40 and 60. "
+wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "no RandAug"]
 
 data:
   CIFAR10:
@@ -84,21 +84,21 @@ model:
   VIT_TINYV3:
     name: 'vit_tiny_v3'
     patch_size: 16
-    emb_size: 384
+    emb_size: 192
     depth: 12
     num_heads: 6
     mlp_ratio: 4.0 
-    dropout: 0.1
-    attn_drop_rate: 0.1
+    dropout: 0.0
+    attn_drop_rate: 0.0
     drop_path_rate: 0.3
     qkv_bias: True
 
 training:
   mixup:
     enabled: true
-    mixup_alpha: 0.2
-    cutmix_alpha: 0.4
-    label_smoothing_mixup: 0.2
+    mixup_alpha: 0.0
+    cutmix_alpha: 0.2
+    label_smoothing_mixup: 0.1
   epochs: 200
   lr: 0.0003
   weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
