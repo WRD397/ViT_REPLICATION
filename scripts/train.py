@@ -141,7 +141,7 @@ def main():
     specific_config = config["model"]['VIT_TINYV3']
     trainingConfig = config['training']
 
-    # **********************************************************
+    # *********************************************************
     
     # data
     DATASET = dataset_config["dataset"]
