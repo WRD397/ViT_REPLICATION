@@ -19,20 +19,46 @@ import shutil
 from torch.utils.data import Subset
 from collections import defaultdict
 import random
+from torch.utils.data import Dataset
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
 config = load_config(f"{ROOT_DIR_PATH}/config/vit_config.yaml")
 data_cfg = config["data"]
 
+class MappedSubset(Dataset):
+    def __init__(self, dataset, indices, label_map):
+        """
+        dataset     : original ImageFolder dataset
+        indices     : indices to keep
+        label_map   : dict {original_label_index: new_label_index}
+        """
+        self.dataset = dataset
+        self.indices = indices
+        self.label_map = label_map  # maps original class indices to [0...N-1]
+
+        # Remapped targets for quick lookup
+        self.targets = [self.label_map[self.dataset[i][1]] for i in self.indices]
+
+        # New class names and mapping
+        used_orig_labels = sorted(self.label_map.keys())  # e.g., [3, 10, 17, 40]
+        self.classes = [self.dataset.classes[orig] for orig in used_orig_labels]
+        self.class_to_idx = {cls_name: new_idx for new_idx, cls_name in enumerate(self.classes)}
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        image, original_label = self.dataset[self.indices[idx]]
+        new_label = self.label_map[original_label]
+        return image, new_label
+
 class DatasetLoader:
-    def __init__(self, training_config, dataset_name, data_dir,
-                 batch_size, num_workers, img_size):
+    def __init__(self, training_config, dataset_name, data_dir, num_workers):
         self.dataset_name = dataset_name.upper()
         self.data_dir = data_dir
-        self.batch_size = batch_size
         self.num_workers = num_workers
-        self.img_size = img_size
+        self.img_size = training_config['image_size']
         self.training_config = training_config
         self.transform = transforms.Compose([
             transforms.Resize((self.img_size, self.img_size)),
@@ -41,29 +67,57 @@ class DatasetLoader:
             else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
+
     @staticmethod
-    def _get_balanced_subset(dataset, num_classes:int, samples_per_class:int):
-        class_to_indices = defaultdict(list)
+    def _get_balanced_dataset(dataset, num_classes=None, samples_per_class=None, train=True, selected_classes=None):
+        """
+        For train=True:
+            - randomly selects `num_classes`
+            - selects `samples_per_class` images per class
+        For train=False:
+            - uses `selected_classes`
+            - selects ALL images from each class
+        """
+        if not train : assert selected_classes is not None, "Validation needs selected_classes from training phase"
+        else : assert (num_classes is not None ) & (samples_per_class is not None), "Training phase needs num_classes and samples_per_class"
+        class_to_all_indices = defaultdict(list)
+
+        # Build mapping from class_label to all indices
         for idx, (_, label) in enumerate(dataset):
-            class_to_indices[label].append(idx)
-        selected_classes = sorted(class_to_indices.keys())[:num_classes]
-        subset_indices = []
-        for cls in selected_classes:
-            indices = class_to_indices[cls]
-            if len(indices) < samples_per_class:
-                raise ValueError(f"Class {cls} has only {len(indices)} samples.")
-            chosen = random.sample(indices, samples_per_class)
-            subset_indices.extend(chosen)
+            class_name = dataset.classes[label]
+            class_to_all_indices[class_name].append(idx)
 
-        balanced_subset = Subset(dataset, subset_indices)
-        balanced_subset.classes = dataset.classes
-        balanced_subset.class_to_idx = dataset.class_to_idx
-        balanced_subset.targets = [dataset.targets[i] for i in subset_indices]
+        if train:
+            # Select num_classes randomly from available ones
+            all_classes = list(class_to_all_indices.keys())
+            selected_classes = random.sample(all_classes, num_classes)
 
-        return balanced_subset
+        selected_indices = []
+        label_map = {}
+        print(f"\n{'[TRAINING]' if train else '[VALIDATION]'} Selected Classes and Sample Counts:\n")
 
+        for new_label, class_name in enumerate(sorted(selected_classes)):
+            indices = class_to_all_indices[class_name]
+            orig_label = dataset.class_to_idx[class_name]
+            print(f"Class '{class_name}' (original label={orig_label}): total images = {len(indices)}", end='')
 
-    def get_dataset(self, train=True):
+            if train:
+                if len(indices) < samples_per_class:
+                    raise ValueError(f"Class '{class_name}' has only {len(indices)} samples.")
+                chosen = random.sample(indices, samples_per_class)
+                print(f", using = {samples_per_class}")
+            else:
+                chosen = indices  # all samples for validation
+                print(f", using = {len(chosen)}")
+            selected_indices.extend(chosen)
+            label_map[orig_label] = new_label
+        print(f"\nTotal selected samples: {len(selected_indices)}")
+        return MappedSubset(dataset, selected_indices, label_map), selected_classes
+
+    def get_dataset(self, train=True, training_classes = None):
+        "Need to pass train_label_map when train = False ie. during validation"
+        if not train : assert training_classes is not None, "Validation needs training classes" 
+        TRAINING_CLASSES = training_classes
         AUG_ENABLED = self.training_config['augmentation_enabled']
         APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
         NUM_SUBSET_CLASS = self.training_config['num_subset_class']
@@ -190,20 +244,35 @@ class DatasetLoader:
             dataset_path = os.path.join(self.data_dir, split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_caltech)
 
-            if train and APPLY_CLASS_BALANCE:
-                dataset = self._get_balanced_subset(dataset, num_classes = NUM_SUBSET_CLASS,samples_per_class = NUM_SUBSET_SAMPLE)
-            
-            return dataset
+            if APPLY_CLASS_BALANCE:
+                if train:
+                    print(f'getting balanced subset - class count : {NUM_SUBSET_CLASS} - sample per class : {NUM_SUBSET_SAMPLE}')
+                    train_dataset, selected_classes = self._get_balanced_dataset(
+                                                                          dataset=dataset,train=train,
+                                                                          num_classes=NUM_SUBSET_CLASS,
+                                                                          samples_per_class=NUM_SUBSET_SAMPLE, selected_classes=TRAINING_CLASSES)
+                    return train_dataset, selected_classes
+                else :
+                    val_dataset,_ = self._get_balanced_dataset(dataset=dataset,
+                                                                            train=train,
+                                                                            selected_classes=TRAINING_CLASSES)
+
+
+                    return val_dataset
+            else :
+                return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
     def get_loaders(self):
-        train_dataset = self.get_dataset(train=True)
-        test_dataset = self.get_dataset(train=False)
+        train_dataset, selected_classes = self.get_dataset(train=True)
+        test_dataset = self.get_dataset(train=False, training_classes=selected_classes)
 
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size,
+        BATCH_SIZE = self.training_config['batch_size']
+
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
-        test_loader = DataLoader(test_dataset, batch_size=self.batch_size,
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE,
                                  shuffle=False, pin_memory = True, num_workers=min(os.cpu_count(),self.num_workers), persistent_workers=True, prefetch_factor=4)
         
         print(f'training size  : {len(train_loader.dataset)}')
