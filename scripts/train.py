@@ -151,9 +151,6 @@ def main():
     IMAGE = dataset_config["img_size"]
     NUM_CLASSES = dataset_config["num_classes"]
     CHANNELS = dataset_config["channels"]
-    if DATASET == 'TINYIMAGENET200':
-        SUBSET_ENABLED = dataset_config['subset_enabled']
-        SUBSET_SIZE = dataset_config['subset_size']
     
     # Model
     MODEL_NAME = specific_config['name']
