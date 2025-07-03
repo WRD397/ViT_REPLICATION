@@ -120,7 +120,11 @@ class VisionTransformerTiny(nn.Module):
                     ATTN_DROP_RATE,
                     DROP_PATH_RATE
                 ):
-
+        args = locals()
+        _ = args.pop('self')
+        print('\n********* Model Params *********')
+        print(args)
+        print('\n')
         super().__init__()
         self.in_channels = CHANNEL
         self.patch_size = PATCH

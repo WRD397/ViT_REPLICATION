@@ -8,9 +8,7 @@ data:
     dataset : 'CIFAR10'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR10'
     channels: 3
-    batch_size: 128
     num_workers: 8
-    img_size: 32
     mean_aug: [0.4914, 0.4822, 0.4465]
     std_aug: [0.2023, 0.1994, 0.2010]
     num_classes: 10
@@ -18,9 +16,7 @@ data:
     dataset : 'CIFAR100'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CIFAR100'
     channels: 3
-    batch_size: 128
     num_workers: 8
-    img_size: 32
     mean_aug: [0.5071, 0.4867, 0.4408]
     std_aug: [0.2675, 0.2565, 0.2761]
     num_classes: 100
@@ -28,9 +24,7 @@ data:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET200'
     channels: 3
-    batch_size: 128
     num_workers: 8
-    img_size: 64
     mean_aug: [0.485, 0.456, 0.406]
     std_aug: [0.229, 0.224, 0.225]
     num_classes: 200
@@ -38,9 +32,7 @@ data:
     dataset : 'CALTECH256'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CALTECH256'
     channels: 3
-    batch_size: 128
     num_workers: 8
-    img_size: 224
     mean_aug: [0.5531906485557556, 0.5342377424240112, 0.5071621537208557]
     std_aug: [0.23687367141246796, 0.2358572781085968, 0.2385127693414688]
     num_classes: 256
@@ -89,6 +81,19 @@ model:
     drop_path_rate: 0.3
     qkv_bias: True
 
+  # tiny - using custom attention but shallow model
+  VIT_TINYV3:
+    name: 'vit_tiny_v4'
+    patch_size: 16
+    emb_size: 192
+    depth: 8
+    num_heads: 3
+    mlp_ratio: 4.0 
+    dropout: 0.0
+    attn_drop_rate: 0.0
+    drop_path_rate: 0.1
+    qkv_bias: True
+
 training:
   mixup:
     enabled: true
@@ -109,27 +114,30 @@ training:
   apply_class_balance : false
   num_subset_class : 0
   num_subset_sample : 0
+  batch_size : 128
+  image_size : 224
 
 training_dummy:
   mixup:
-    enabled: false
-    mixup_alpha: 0.0
-    cutmix_alpha: 0.0
-    label_smoothing_mixup: 0.0
-  epochs: 50
+    enabled: true
+    mixup_alpha: 0.1
+    cutmix_alpha: 0.4
+    label_smoothing_mixup: 0.2
+  epochs: 200
   lr: 0.0003
-  weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
-  scheduler : false
-  scheduler_warmup : false
-  warmup_steps : 0
+  weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  scheduler_warmup : true
+  warmup_steps : 30
   label_smoothing_enabled : false
   label_smoothing : 0.0 # increase to reduce overfitting
-  es_patience : 10000000
-  es_improv_delta : 0.00000001
-  augmentation_enabled : false
+  es_patience : 30
+  es_improv_delta : 0.001
+  augmentation_enabled : true
   apply_class_balance : true
-  num_subset_classes : 10
-  num_subset_sample : 10
+  num_subset_class : 10
+  num_subset_sample : 60
+  batch_size : 64
+  image_size : 224
 
 ## ********* RESOURCES ***********
 
