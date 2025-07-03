@@ -16,6 +16,9 @@ from utils.caltech_setup import prepare_caltech256
 from collections import defaultdict
 import os
 import shutil
+from torch.utils.data import Subset
+from collections import defaultdict
+import random
 
 # loading config file for CIFAR10
 #config = load_config(f"{ROOT_DIR_PATH}/config/vit_test_config.yaml")
@@ -31,7 +34,6 @@ class DatasetLoader:
         self.num_workers = num_workers
         self.img_size = img_size
         self.training_config = training_config
-
         self.transform = transforms.Compose([
             transforms.Resize((self.img_size, self.img_size)),
             transforms.ToTensor(),
@@ -39,8 +41,34 @@ class DatasetLoader:
             else transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
+    @staticmethod
+    def _get_balanced_subset(dataset, num_classes:int, samples_per_class:int):
+        class_to_indices = defaultdict(list)
+        for idx, (_, label) in enumerate(dataset):
+            class_to_indices[label].append(idx)
+        selected_classes = sorted(class_to_indices.keys())[:num_classes]
+        subset_indices = []
+        for cls in selected_classes:
+            indices = class_to_indices[cls]
+            if len(indices) < samples_per_class:
+                raise ValueError(f"Class {cls} has only {len(indices)} samples.")
+            chosen = random.sample(indices, samples_per_class)
+            subset_indices.extend(chosen)
+
+        balanced_subset = Subset(dataset, subset_indices)
+        balanced_subset.classes = dataset.classes
+        balanced_subset.class_to_idx = dataset.class_to_idx
+        balanced_subset.targets = [dataset.targets[i] for i in subset_indices]
+
+        return balanced_subset
+
+
     def get_dataset(self, train=True):
         AUG_ENABLED = self.training_config['augmentation_enabled']
+        APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
+        NUM_SUBSET_CLASS = self.training_config['num_subset_class']
+        NUM_SUBSET_SAMPLE = self.training_config['num_subset_sample']
+
         if self.dataset_name == 'CIFAR10':
             #data augmentation - tackle overfitting problem, specially on small datasets like cifar10
             # CIFAR-10 mean & std
@@ -103,8 +131,6 @@ class DatasetLoader:
             tinyiimg_cfg = data_cfg['TINYIMAGENET200']
             mean_tinyimg= tinyiimg_cfg['mean_aug']
             std_tinyimg  = tinyiimg_cfg['std_aug']
-            subset_enabled = tinyiimg_cfg['subset_enabled']
-            subset_size = tinyiimg_cfg['subset_size']
             img_size = self.img_size
             train_transform_tinyimg = transforms.Compose([
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
@@ -128,47 +154,20 @@ class DatasetLoader:
             split_folder = "train" if train else "val"
             dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_tinyimg)
-            if train:
-                if subset_enabled:
-                    APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
-
-                    if APPLY_CLASS_BALANCE:
-                        NUM_CLASSES = 20
-                        SAMPLES_PER_CLASS = 5
-                        class_to_indices = defaultdict(list)
-                        for idx, (_, label) in enumerate(dataset):
-                            class_to_indices[label].append(idx)
-
-                        subset_indices = []
-                        for label in sorted(class_to_indices.keys())[:NUM_CLASSES]:
-                            subset_indices.extend(class_to_indices[label][:SAMPLES_PER_CLASS])
-
-                        subset_dataset = Subset(dataset, subset_indices)
-                        dataset=subset_dataset
-                    else :
-                        subset_size = subset_size
-                        indices = torch.randperm(len(dataset))[:subset_size]
-                        subset = torch.utils.data.Subset(dataset, indices)
-                        subset.classes = dataset.classes
-                        subset.class_to_idx = dataset.class_to_idx
-                        subset.targets = [dataset.targets[i] for i in indices] 
-                        dataset = subset
-
+            if train and APPLY_CLASS_BALANCE:
+                dataset = self._get_balanced_subset(dataset, num_classes = NUM_SUBSET_CLASS,samples_per_class = NUM_SUBSET_SAMPLE)
+            
             return dataset
         elif self.dataset_name == 'CALTECH256':
-            APPLY_CLASS_BALANCE = self.training_config['apply_class_balance']
             prepare_caltech256()
             caltech_cfg = data_cfg['CALTECH256']
             mean_caltech = caltech_cfg['mean_aug']
             std_caltech = caltech_cfg['std_aug']
-            subset_enabled = caltech_cfg.get('subset_enabled')
-            subset_size = caltech_cfg.get('subset_size')
-
             train_transform_caltech = transforms.Compose([
                 transforms.RandomResizedCrop(self.img_size, scale=(0.6, 1.0)),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.9, 1.1)),
-                #transforms.RandAugment(num_ops=2, magnitude=9),
+                transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_caltech, std_caltech),
                 transforms.RandomErasing(p=0.15, scale=(0.01, 0.05), ratio=(0.3, 3.3), value='random')
@@ -191,27 +190,9 @@ class DatasetLoader:
             dataset_path = os.path.join(self.data_dir, split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_caltech)
 
-            if train and subset_enabled:
-                indices = torch.randperm(len(dataset))[:subset_size]
-                subset = Subset(dataset, indices)
-                subset.classes = dataset.classes
-                subset.class_to_idx = dataset.class_to_idx
-                subset.targets = [dataset.targets[i] for i in indices]
-                dataset = subset
-
             if train and APPLY_CLASS_BALANCE:
-                NUM_CLASSES = 10
-                SAMPLES_PER_CLASS = 10
-                class_to_indices = defaultdict(list)
-                for idx, (_, label) in enumerate(dataset):
-                    class_to_indices[label].append(idx)
-
-                subset_indices = []
-                for label in sorted(class_to_indices.keys())[:NUM_CLASSES]:
-                    subset_indices.extend(class_to_indices[label][:SAMPLES_PER_CLASS])
-
-                subset_dataset = Subset(dataset, subset_indices)
-                dataset=subset_dataset
+                dataset = self._get_balanced_subset(dataset, num_classes = NUM_SUBSET_CLASS,samples_per_class = NUM_SUBSET_SAMPLE)
+            
             return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
