@@ -27,8 +27,6 @@ data:
   TINYIMAGENET200:
     dataset : 'TINYIMAGENET200'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/TINYIMAGENET200'
-    subset_enabled : true
-    subset_size : 50000 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -39,8 +37,6 @@ data:
   CALTECH256:
     dataset : 'CALTECH256'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CALTECH256'
-    subset_enabled : false
-    subset_size : 5000 # 20% of total(100k training data)
     channels: 3
     batch_size: 128
     num_workers: 8
@@ -110,7 +106,9 @@ training:
   es_patience : 20
   es_improv_delta : 0.001
   augmentation_enabled : true
-  apply_class_balance : false #always false for actual training
+  apply_class_balance : false
+  num_subset_class : 0
+  num_subset_sample : 0
 
 training_dummy:
   mixup:
@@ -130,6 +128,8 @@ training_dummy:
   es_improv_delta : 0.00000001
   augmentation_enabled : false
   apply_class_balance : true
+  num_subset_classes : 10
+  num_subset_sample : 10
 
 ## ********* RESOURCES ***********
 
