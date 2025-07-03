@@ -146,12 +146,27 @@ def main():
     # data
     DATASET = dataset_config["dataset"]
     DATA_DIR =f'{ROOT_DIR_PATH}/data/{DATASET}/'
-    BATCH = dataset_config["batch_size"]
     NUM_WORKERS = dataset_config["num_workers"]
-    IMAGE = dataset_config["img_size"]
     NUM_CLASSES = dataset_config["num_classes"]
     CHANNELS = dataset_config["channels"]
-    
+
+    # training config
+    LEARNING_RATE = trainingConfig['lr']
+    EPOCHS = trainingConfig['epochs']
+    WEIGHT_DECAY = trainingConfig['weight_decay']
+    USE_SCHEDULER = trainingConfig['scheduler']
+    USE_SCHEDULER_WARMUP = trainingConfig['scheduler_warmup']
+    WARMUP_STEPS = trainingConfig['warmup_steps']
+    USE_LABEL_SMOOTHENING = trainingConfig["label_smoothing_enabled"]
+    LABEL_SMOOTHENING = trainingConfig["label_smoothing"]
+    EARLY_STOPPING_PATIENCE = trainingConfig["es_patience"]
+    EARLY_STOPPING_IMPROVEMENT_DELTA = trainingConfig["es_improv_delta"]
+    AUG_ENABLED = trainingConfig["augmentation_enabled"]
+    BATCH = trainingConfig["batch_size"]
+    IMAGE = trainingConfig["img_size"]
+    APPLY_CLASS_BALANCED = trainingConfig['apply_class_balance']
+    NUM_SUBSET_CLASS = trainingConfig['num_subset_class']
+    NUM_SUBSET_SAMPLE = trainingConfig['num_subset_sample']
     # Model
     MODEL_NAME = specific_config['name']
     modelConfigDict = {
@@ -168,19 +183,6 @@ def main():
         'ATTN_DROP_RATE': specific_config['attn_drop_rate'],
         'DROP_PATH_RATE': specific_config['drop_path_rate']
     }    
-
-    # training config
-    LEARNING_RATE = trainingConfig['lr']
-    EPOCHS = trainingConfig['epochs']
-    WEIGHT_DECAY = trainingConfig['weight_decay']
-    USE_SCHEDULER = trainingConfig['scheduler']
-    USE_SCHEDULER_WARMUP = trainingConfig['scheduler_warmup']
-    WARMUP_STEPS = trainingConfig['warmup_steps']
-    USE_LABEL_SMOOTHENING = trainingConfig["label_smoothing_enabled"]
-    LABEL_SMOOTHENING = trainingConfig["label_smoothing"]
-    EARLY_STOPPING_PATIENCE = trainingConfig["es_patience"]
-    EARLY_STOPPING_IMPROVEMENT_DELTA = trainingConfig["es_improv_delta"]
-    AUG_ENABLED = trainingConfig["augmentation_enabled"]
 
     # mixup config
     mixupConfig = trainingConfig['mixup']
@@ -200,7 +202,7 @@ def main():
     print('LR SchedulerWarmup is Enabled') if USE_SCHEDULER_WARMUP else print('LR SchedulerWarmup is Disabled')
     print('MixUp is Enabled') if USE_MIXUP else print('MixUp is Disabled')
     print('Data Augmentation is Enabled') if AUG_ENABLED else print('Data Augmentation is Disabled')
-    if DATASET == 'TINYIMAGENET': print(f'Subset is Enabled - {SUBSET_SIZE}') if SUBSET_ENABLED else print('Subset is Disabled.')
+    print(f'Subset is Enabled - class : {NUM_SUBSET_CLASS} - sample per class : {NUM_SUBSET_SAMPLE}') if APPLY_CLASS_BALANCED else print('Subset is Disabled.')
     print('-----------')
     # === Mixup Setup ===
     mixup_fn = None
@@ -223,9 +225,7 @@ def main():
     loader = DatasetLoader(training_config=trainingConfig,
                             dataset_name=DATASET,
                             data_dir=DATA_DIR,
-                            batch_size=BATCH,
-                            num_workers=NUM_WORKERS,
-                            img_size=IMAGE)
+                            num_workers=NUM_WORKERS)
     train_loader, val_loader = loader.get_loaders()
     print(f"Train batches: {len(train_loader)}, Validation batches: {len(val_loader)}")
     print('data sanity check')
@@ -276,7 +276,8 @@ def main():
         "dataset": DATASET,
         "train_sample":len(train_loader),
         "val_sample": len(val_loader),
-        "subset_size": SUBSET_SIZE if DATASET == 'TINYIMAGENET200' else np.nan,
+        "subset_class_no": NUM_SUBSET_CLASS if APPLY_CLASS_BALANCED else np.nan,
+        "subset_class_sample_no":NUM_SUBSET_SAMPLE if APPLY_CLASS_BALANCED else np.nan,
         "batch_size": BATCH,
         "img_size": IMAGE,
         
