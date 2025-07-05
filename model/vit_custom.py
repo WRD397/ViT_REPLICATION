@@ -83,12 +83,12 @@ class DropPath(nn.Module):
 
 
 class TransformerEncoderBlock(nn.Module):
-    def __init__(self, emb_size, num_heads, mlp_ratio, dropout, drop_path_rate=0.0):
+    def __init__(self, emb_size, num_heads, mlp_ratio, dropout, drop_path_rate, layerscale_eps=1e-2):
         super().__init__()
         self.ln1 = nn.LayerNorm(emb_size)
         self.attn = Attention(dim=emb_size, num_heads=num_heads)
         self.drop_path1 = DropPath(drop_path_rate)
-
+        self.gamma1 = nn.Parameter(torch.ones(emb_size) * layerscale_eps)
         self.ln2 = nn.LayerNorm(emb_size)
         self.mlp = nn.Sequential(
             nn.Linear(emb_size, int(emb_size * mlp_ratio)),
@@ -98,10 +98,10 @@ class TransformerEncoderBlock(nn.Module):
             nn.Dropout(dropout)
         )
         self.drop_path2 = DropPath(drop_path_rate)
-
+        self.gamma2 = nn.Parameter(torch.ones(emb_size) * layerscale_eps)
     def forward(self, x):
-        x = x + self.drop_path1(self.attn(self.ln1(x)))  # Apply drop-path to attention output
-        x = x + self.drop_path2(self.mlp(self.ln2(x)))   # Apply drop-path to MLP output
+        x = x + self.drop_path1(self.gamma1*self.attn(self.ln1(x)))  # Apply drop-path to attention output
+        x = x + self.drop_path2(self.gamma2*self.mlp(self.ln2(x)))   # Apply drop-path to MLP output
         return x
     
 
@@ -147,6 +147,7 @@ class VisionTransformerTiny(nn.Module):
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
+        self.cls_token_dropout = nn.Dropout(p=0.01)
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, self.embed_dim))
         self.pos_drop = nn.Dropout(p=self.dropout)
 
@@ -165,19 +166,35 @@ class VisionTransformerTiny(nn.Module):
 
         self.norm = nn.LayerNorm(self.embed_dim)
         self.head = nn.Linear(self.embed_dim, self.num_classes)
-        self._init_weights()
+        self.apply(self._init_weights)
+        self._init_pos_cls_head()
 
-    def _init_weights(self):
-        nn.init.trunc_normal_(self.pos_embed, std=0.02)
-        nn.init.trunc_normal_(self.cls_token, std=0.02)
-        nn.init.trunc_normal_(self.head.weight, std=0.02)
+    def _init_pos_cls_head(self):
+        nn.init.trunc_normal_(self.pos_embed, mean=0.0, std=0.02, a=-0.02, b=0.02)
+        nn.init.trunc_normal_(self.cls_token, mean=0.0, std=0.02, a=-0.02, b=0.02)
+        nn.init.trunc_normal_(self.head.weight, mean=0.0, std=0.02, a=-0.02, b=0.02)
         nn.init.constant_(self.head.bias, 0)
+    
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            nn.init.trunc_normal_(m.weight, mean=0.0, std=0.02, a=-0.02, b=0.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.Conv2d):
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+
 
     def forward_features(self, x):
         B = x.shape[0]
         x = self.patch_embed(x)  # (B, N, C)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)  # (B, 1, C)
+        cls_tokens = self.cls_token_dropout(cls_tokens)
         x = torch.cat((cls_tokens, x), dim=1)  # (B, N+1, C)
         x = x + self.pos_embed[:, :x.size(1), :]
         x = self.pos_drop(x)
