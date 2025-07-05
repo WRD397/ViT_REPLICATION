@@ -139,7 +139,7 @@ def main():
     
     dataset_config = config["data"]['CALTECH256']
     specific_config = config["model"]['VIT_TINYV3']
-    trainingConfig = config['training']
+    trainingConfig = config['training_dummy']
 
     # *********************************************************
     
@@ -147,14 +147,13 @@ def main():
     DATASET = dataset_config["dataset"]
     DATA_DIR =f'{ROOT_DIR_PATH}/data/{DATASET}/'
     NUM_WORKERS = dataset_config["num_workers"]
-    NUM_CLASSES = dataset_config["num_classes"]
+    NUM_CLASSES = trainingConfig['num_subset_class'] if trainingConfig['apply_class_balance'] else dataset_config['num_classes']
     CHANNELS = dataset_config["channels"]
 
     # training config
     LEARNING_RATE = trainingConfig['lr']
     EPOCHS = trainingConfig['epochs']
     WEIGHT_DECAY = trainingConfig['weight_decay']
-    USE_SCHEDULER = trainingConfig['scheduler']
     USE_SCHEDULER_WARMUP = trainingConfig['scheduler_warmup']
     WARMUP_STEPS = trainingConfig['warmup_steps']
     USE_LABEL_SMOOTHENING = trainingConfig["label_smoothing_enabled"]
@@ -163,7 +162,7 @@ def main():
     EARLY_STOPPING_IMPROVEMENT_DELTA = trainingConfig["es_improv_delta"]
     AUG_ENABLED = trainingConfig["augmentation_enabled"]
     BATCH = trainingConfig["batch_size"]
-    IMAGE = trainingConfig["img_size"]
+    IMAGE = trainingConfig["image_size"]
     APPLY_CLASS_BALANCED = trainingConfig['apply_class_balance']
     NUM_SUBSET_CLASS = trainingConfig['num_subset_class']
     NUM_SUBSET_SAMPLE = trainingConfig['num_subset_sample']
@@ -198,7 +197,6 @@ def main():
     # logging switches
     print('-----------')
     print('Label Smoothening is Enabled') if USE_LABEL_SMOOTHENING else print('Label Smoothening is Disabled')
-    print('LR Scheduler is Enabled') if USE_SCHEDULER else print('LR Scheduler is Disabled')
     print('LR SchedulerWarmup is Enabled') if USE_SCHEDULER_WARMUP else print('LR SchedulerWarmup is Disabled')
     print('MixUp is Enabled') if USE_MIXUP else print('MixUp is Disabled')
     print('Data Augmentation is Enabled') if AUG_ENABLED else print('Data Augmentation is Disabled')
@@ -255,9 +253,7 @@ def main():
     optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     scheduler_warmup_obj = None
     scheduler_warmup_enabled_flag = False
-    if USE_SCHEDULER : 
-        scheduler = CosineAnnealingLR(optimizer, T_max=EPOCHS)
-    elif USE_SCHEDULER_WARMUP:
+    if USE_SCHEDULER_WARMUP:
         scheduler_warmup_enabled_flag = True
         num_training_steps = EPOCHS * len(train_loader)
         num_warmup_steps = WARMUP_STEPS * len(train_loader)
@@ -349,12 +345,9 @@ def main():
     for epoch in range(1,EPOCHS+1):
         print(f"\nEpoch {epoch}/{EPOCHS}")
 
-        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, scaler, device,
-                                                mixup_fn=mixup_fn,
-                                                scheduler_warmup_enabled=scheduler_warmup_enabled_flag,
-                                                scheduler_warmup=scheduler_warmup_obj)
+        train_loss, train_acc = train_one_epoch(model, train_loader, train_criterion, optimizer, scaler, device,  mixup_fn=mixup_fn,scheduler_warmup_enabled=scheduler_warmup_enabled_flag,
+          scheduler_warmup=scheduler_warmup_obj)
         val_loss, val_acc, val_acc_top5 = validate(model, val_loader, val_criterion, device)
-        if USE_SCHEDULER : scheduler.step()
 
         # monitoring learning rate variation
         current_lr = optimizer.param_groups[0]['lr']
@@ -377,8 +370,7 @@ def main():
             best_epoch = epoch
             best_model_state = copy.deepcopy(model.state_dict())
             best_optimizer_state = copy.deepcopy(optimizer.state_dict())
-            if USE_SCHEDULER: best_scheduler_state = copy.deepcopy(scheduler.state_dict())
-            elif USE_SCHEDULER_WARMUP : best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
+            if USE_SCHEDULER_WARMUP : best_scheduler_state = copy.deepcopy(scheduler_warmup_obj.state_dict())
             else : best_scheduler_state = None
             best_scaler_state = copy.deepcopy(scaler.state_dict())
 
