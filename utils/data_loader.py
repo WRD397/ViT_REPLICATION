@@ -213,7 +213,6 @@ class DatasetLoader:
             
             return dataset
         elif self.dataset_name == 'CALTECH256':
-            prepare_caltech256()
             caltech_cfg = data_cfg['CALTECH256']
             mean_caltech = caltech_cfg['mean_aug']
             std_caltech = caltech_cfg['std_aug']
@@ -243,6 +242,13 @@ class DatasetLoader:
                 shutil.rmtree(clutter_dir)
             dataset_path = os.path.join(self.data_dir, split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_caltech)
+            # choosing all the classes.
+            class_to_all_indices = defaultdict(list)
+            for idx, (_, label) in enumerate(dataset):
+                class_name = dataset.classes[label]
+                class_to_all_indices[class_name].append(idx)
+            all_classes = list(class_to_all_indices.keys())
+            selected_classes = all_classes
 
             if APPLY_CLASS_BALANCE:
                 if train:
@@ -256,15 +262,18 @@ class DatasetLoader:
                     val_dataset,_ = self._get_balanced_dataset(dataset=dataset,
                                                                             train=train,
                                                                             selected_classes=TRAINING_CLASSES)
-
-
                     return val_dataset
-            else :
-                return dataset
+                
+            elif not APPLY_CLASS_BALANCE :
+                if train: return dataset, selected_classes
+                else: return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
     def get_loaders(self):
+        if self.dataset_name == 'CALTECH256': prepare_caltech256()
+        elif self.dataset_name == 'TINYIMAGENET200':prepare_tiny_imagenet()
+
         train_dataset, selected_classes = self.get_dataset(train=True)
         test_dataset = self.get_dataset(train=False, training_classes=selected_classes)
 
