@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_subset_test2"
-run_notes : "even if accuracy slightly increased, now the issue is instability. inc layerscale eps in gamma from 1e-3 to 1e-2. initializing weights for all possible cases. using custom boundary of -0.02 and 0.02 inside trunc_normal instead of the default one +2 and -2"
+run : "vittinyv3_caltech256_subset_test6"
+run_notes : "still val acc low, returning to the last successful state - LayerNorm 0.1 and class token dropout 0.3" 
 wandb_tags : ["ViT", "CALTECH256", "custom model", "subset"]
 
 data:
