@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_runv2"
-run_notes : "cutmix/mixup reduced further to tackle underperformance - train/val both stuck at 40 and 60. "
-wandb_tags : ["ViT", "CALTECH256", "custom model", "mixup", "no RandAug"]
+run : "vittinyv3_caltech256_subset_test2"
+run_notes : "even if accuracy slightly increased, now the issue is instability. inc layerscale eps in gamma from 1e-3 to 1e-2. initializing weights for all possible cases. using custom boundary of -0.02 and 0.02 inside trunc_normal instead of the default one +2 and -2"
+wandb_tags : ["ViT", "CALTECH256", "custom model", "subset"]
 
 data:
   CIFAR10:
@@ -78,11 +78,11 @@ model:
     mlp_ratio: 4.0 
     dropout: 0.0
     attn_drop_rate: 0.0
-    drop_path_rate: 0.3
+    drop_path_rate: 0.1
     qkv_bias: True
 
   # tiny - using custom attention but shallow model
-  VIT_TINYV3:
+  VIT_TINYV4:
     name: 'vit_tiny_v4'
     patch_size: 16
     emb_size: 192
@@ -121,8 +121,8 @@ training_dummy:
   mixup:
     enabled: true
     mixup_alpha: 0.1
-    cutmix_alpha: 0.4
-    label_smoothing_mixup: 0.2
+    cutmix_alpha: 0.6
+    label_smoothing_mixup: 0.1
   epochs: 200
   lr: 0.0003
   weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
