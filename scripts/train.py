@@ -139,7 +139,7 @@ def main():
     
     dataset_config = config["data"]['CALTECH256']
     specific_config = config["model"]['VIT_TINYV3']
-    trainingConfig = config['training_dummy']
+    trainingConfig = config['training']
 
     # *********************************************************
     
