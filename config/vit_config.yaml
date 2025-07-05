@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_subset_test6"
-run_notes : "still val acc low, returning to the last successful state - LayerNorm 0.1 and class token dropout 0.3" 
-wandb_tags : ["ViT", "CALTECH256", "custom model", "subset"]
+run : "vittinyv3_caltech256_runv3"
+run_notes : "added layerNorm and class token as tested last." 
+wandb_tags : ["ViT", "CALTECH256", "custom model"]
 
 data:
   CIFAR10:
@@ -29,7 +29,7 @@ data:
     std_aug: [0.229, 0.224, 0.225]
     num_classes: 200
   CALTECH256:
-    dataset : 'CALTECH256'
+    dataset: 'CALTECH256'
     data_path: '/home/wd/Documents/work_stuff/ViT_REPLICATION/data/CALTECH256'
     channels: 3
     num_workers: 8
@@ -97,8 +97,8 @@ model:
 training:
   mixup:
     enabled: true
-    mixup_alpha: 0.0
-    cutmix_alpha: 0.2
+    mixup_alpha: 0.1
+    cutmix_alpha: 0.6
     label_smoothing_mixup: 0.1
   epochs: 200
   lr: 0.0003
@@ -108,7 +108,7 @@ training:
   warmup_steps : 30
   label_smoothing_enabled : false
   label_smoothing : 0.0 # increase to reduce overfitting
-  es_patience : 20
+  es_patience : 30
   es_improv_delta : 0.001
   augmentation_enabled : true
   apply_class_balance : false
