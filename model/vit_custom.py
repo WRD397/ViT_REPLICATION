@@ -83,7 +83,7 @@ class DropPath(nn.Module):
 
 
 class TransformerEncoderBlock(nn.Module):
-    def __init__(self, emb_size, num_heads, mlp_ratio, dropout, drop_path_rate, layerscale_eps=1e-2):
+    def __init__(self, emb_size, num_heads, mlp_ratio, dropout, drop_path_rate, layerscale_eps=0.1):
         super().__init__()
         self.ln1 = nn.LayerNorm(emb_size)
         self.attn = Attention(dim=emb_size, num_heads=num_heads)
@@ -147,7 +147,7 @@ class VisionTransformerTiny(nn.Module):
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
-        self.cls_token_dropout = nn.Dropout(p=0.01)
+        self.cls_token_dropout = nn.Dropout(p=0.3)
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, self.embed_dim))
         self.pos_drop = nn.Dropout(p=self.dropout)
 
