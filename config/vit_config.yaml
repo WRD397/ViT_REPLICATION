@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_caltech256_runv3"
-run_notes : "added layerNorm and class token as tested last." 
-wandb_tags : ["ViT", "CALTECH256", "custom model"]
+run : "vittinyv3_tinyimagenet200_testV0"
+run_notes : "test" 
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model"]
 
 data:
   CIFAR10:
@@ -111,9 +111,9 @@ training:
   es_patience : 30
   es_improv_delta : 0.001
   augmentation_enabled : true
-  apply_class_balance : false
-  num_subset_class : 0
-  num_subset_sample : 0
+  apply_class_balance : true
+  num_subset_class : 10
+  num_subset_sample : 50
   batch_size : 128
   image_size : 64
 
