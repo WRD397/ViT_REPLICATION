@@ -71,7 +71,7 @@ model:
   # tiny - using custom attention
   VIT_TINYV3:
     name: 'vit_tiny_v3'
-    patch_size: 16
+    patch_size: 8
     emb_size: 192
     depth: 12
     num_heads: 6
@@ -115,7 +115,7 @@ training:
   num_subset_class : 0
   num_subset_sample : 0
   batch_size : 128
-  image_size : 224
+  image_size : 64
 
 training_dummy:
   mixup:
