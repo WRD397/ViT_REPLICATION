@@ -137,7 +137,7 @@ def main():
 
     # *************  choosing the DATASET & MODEL *************
     
-    dataset_config = config["data"]['CALTECH256']
+    dataset_config = config["data"]['TINYIMAGENET200']
     specific_config = config["model"]['VIT_TINYV3']
     trainingConfig = config['training']
 
@@ -270,8 +270,8 @@ def main():
 
     loggable_config = {
         "dataset": DATASET,
-        "train_sample":len(train_loader),
-        "val_sample": len(val_loader),
+        "training size":len(train_loader.dataset),
+        "validation size": len(val_loader.dataset),
         "subset_class_no": NUM_SUBSET_CLASS if APPLY_CLASS_BALANCED else np.nan,
         "subset_class_sample_no":NUM_SUBSET_SAMPLE if APPLY_CLASS_BALANCED else np.nan,
         "batch_size": BATCH,
