@@ -181,7 +181,6 @@ class DatasetLoader:
         elif self.dataset_name == 'FASHIONMNIST':
             return datasets.FashionMNIST(root=self.data_dir, train=train, download=True, transform=self.transform)
         elif self.dataset_name == 'TINYIMAGENET200':
-            prepare_tiny_imagenet()
             tinyiimg_cfg = data_cfg['TINYIMAGENET200']
             mean_tinyimg= tinyiimg_cfg['mean_aug']
             std_tinyimg  = tinyiimg_cfg['std_aug']
@@ -189,6 +188,7 @@ class DatasetLoader:
             train_transform_tinyimg = transforms.Compose([
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
                 transforms.RandomHorizontalFlip(p=0.5),
+                transforms.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.9, 1.1)),
                 transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_tinyimg, std_tinyimg),
@@ -208,10 +208,22 @@ class DatasetLoader:
             split_folder = "train" if train else "val"
             dataset_path = os.path.join(self.data_dir, "tiny-imagenet-200", split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_tinyimg)
-            if train and APPLY_CLASS_BALANCE:
-                dataset = self._get_balanced_subset(dataset, num_classes = NUM_SUBSET_CLASS,samples_per_class = NUM_SUBSET_SAMPLE)
+            if APPLY_CLASS_BALANCE:
+                if train:
+                    print(f'getting balanced subset - class count : {NUM_SUBSET_CLASS} - sample per class : {NUM_SUBSET_SAMPLE}')
+                    train_dataset, selected_classes = self._get_balanced_dataset(
+                                                                          dataset=dataset,train=train,
+                                                                          num_classes=NUM_SUBSET_CLASS,
+                                                                          samples_per_class=NUM_SUBSET_SAMPLE, selected_classes=TRAINING_CLASSES)
+                    return train_dataset, selected_classes
+                else :
+                    val_dataset,_ = self._get_balanced_dataset(dataset=dataset,
+                                                                            train=train,
+                                                                            selected_classes=TRAINING_CLASSES)
+                    return val_dataset
+            else :
+                return dataset
             
-            return dataset
         elif self.dataset_name == 'CALTECH256':
             caltech_cfg = data_cfg['CALTECH256']
             mean_caltech = caltech_cfg['mean_aug']
@@ -242,13 +254,6 @@ class DatasetLoader:
                 shutil.rmtree(clutter_dir)
             dataset_path = os.path.join(self.data_dir, split_folder)
             dataset = ImageFolder(root=dataset_path, transform=transform_caltech)
-            # choosing all the classes.
-            class_to_all_indices = defaultdict(list)
-            for idx, (_, label) in enumerate(dataset):
-                class_name = dataset.classes[label]
-                class_to_all_indices[class_name].append(idx)
-            all_classes = list(class_to_all_indices.keys())
-            selected_classes = all_classes
 
             if APPLY_CLASS_BALANCE:
                 if train:
@@ -264,18 +269,20 @@ class DatasetLoader:
                                                                             selected_classes=TRAINING_CLASSES)
                     return val_dataset
                 
-            elif not APPLY_CLASS_BALANCE :
-                if train: return dataset, selected_classes
-                else: return dataset
+            else:
+                return dataset
         else:
             raise ValueError(f"Unsupported dataset: {self.dataset_name}")
 
     def get_loaders(self):
         if self.dataset_name == 'CALTECH256': prepare_caltech256()
         elif self.dataset_name == 'TINYIMAGENET200':prepare_tiny_imagenet()
-
-        train_dataset, selected_classes = self.get_dataset(train=True)
-        test_dataset = self.get_dataset(train=False, training_classes=selected_classes)
+        if self.training_config['apply_class_balance']:
+            train_dataset, selected_classes = self.get_dataset(train=True)
+            test_dataset = self.get_dataset(train=False, training_classes=selected_classes)
+        else :
+            train_dataset = self.get_dataset(train=True)
+            test_dataset = self.get_dataset(train=False)
 
         BATCH_SIZE = self.training_config['batch_size']
 
