@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet200_runV9"
-run_notes : "inc model capacity, lowering regularization as the model has underfitting issue." 
+run : "vittinyv3_tinyimagenet200_runV10"
+run_notes : "slight overfitting. but still low accuracy, dec patch size to 8 from 16." 
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout"]
 
 data:
@@ -87,7 +87,7 @@ model:
   # tiny - custom attention - for deeper training
   VIT_TINYV4:
     name: 'vit_tiny_v4'
-    patch_size: 16
+    patch_size: 8
     emb_size: 384
     depth: 12
     num_heads: 6
@@ -95,9 +95,9 @@ model:
     dropout: 0.0
     attention_drop: 0.0
     projection_drop: 0.0
-    drop_path_rate: 0.1
+    drop_path_rate: 0.3
     qkv_bias: True
-    layerscale_eps : 0.05 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
+    layerscale_eps : 0.1 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
     class_token_dropout : 0.3 #0.3 gave the best result in caltech256 subset test - 0 means disabling the impact
 
 training:
