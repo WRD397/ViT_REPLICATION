@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_tinyimagenet200_runV10"
-run_notes : "slight overfitting. but still low accuracy, dec patch size to 8 from 16." 
-wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout"]
+run_notes : "slight overfitting. but still low accuracy, dec patch size to 8 from 16. incorporated INPUT LAYERNORM BEFORE PATCH EMBEDDING." 
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout", "input layer norm incorporated"]
 
 data:
   CIFAR10:
@@ -121,7 +121,7 @@ training:
   num_subset_class : 200
   num_subset_sample : 200
   batch_size : 128
-  image_size : 64
+  image_size : 224
 
 training_dummy:
   mixup:
