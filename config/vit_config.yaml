@@ -120,7 +120,7 @@ training:
   apply_class_balance : true
   num_subset_class : 200
   num_subset_sample : 150
-  batch_size : 128
+  batch_size : 64
   image_size : 224
 
 training_dummy:
