@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet200_runV8"
-run_notes : "acc inproved slightly. but overfitting. reducing mixup, inc drop path." 
+run : "vittinyv3_tinyimagenet200_runV9"
+run_notes : "inc model capacity." 
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout"]
 
 data:
