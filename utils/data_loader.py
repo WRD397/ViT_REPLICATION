@@ -94,24 +94,24 @@ class DatasetLoader:
 
         selected_indices = []
         label_map = {}
-        print(f"\n{'[TRAINING]' if train else '[VALIDATION]'} Selected Classes and Sample Counts:\n")
+        print(f"{'[TRAINING]' if train else '[VALIDATION]'}")
 
         for new_label, class_name in enumerate(sorted(selected_classes)):
             indices = class_to_all_indices[class_name]
             orig_label = dataset.class_to_idx[class_name]
-            print(f"Class '{class_name}' (original label={orig_label}): total images = {len(indices)}", end='')
+            #print(f"Class '{class_name}' (original label={orig_label}): total images = {len(indices)}", end='')
 
             if train:
                 if len(indices) < samples_per_class:
                     raise ValueError(f"Class '{class_name}' has only {len(indices)} samples.")
                 chosen = random.sample(indices, samples_per_class)
-                print(f", using = {samples_per_class}")
+                #print(f", using = {samples_per_class}")
             else:
                 chosen = indices  # all samples for validation
-                print(f", using = {len(chosen)}")
+                #print(f", using = {len(chosen)}")
             selected_indices.extend(chosen)
             label_map[orig_label] = new_label
-        print(f"\nTotal selected samples: {len(selected_indices)}")
+        print(f"Total selected samples: {len(selected_indices)}")
         return MappedSubset(dataset, selected_indices, label_map), selected_classes
 
     def get_dataset(self, train=True, training_classes = None):
