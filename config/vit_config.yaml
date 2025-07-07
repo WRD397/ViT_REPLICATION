@@ -88,9 +88,9 @@ model:
   VIT_TINYV4:
     name: 'vit_tiny_v4'
     patch_size: 8
-    emb_size: 384
+    emb_size: 256
     depth: 12
-    num_heads: 6
+    num_heads: 4
     mlp_ratio: 4.0 
     dropout: 0.0
     attention_drop: 0.0
