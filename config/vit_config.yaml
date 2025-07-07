@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_tinyimagenet200_runV9"
-run_notes : "inc model capacity." 
+run_notes : "inc model capacity, lowering regularization as the model has underfitting issue." 
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout"]
 
 data:
@@ -92,13 +92,13 @@ model:
     depth: 12
     num_heads: 6
     mlp_ratio: 4.0 
-    dropout: 0.1
-    attention_drop: 0.1
-    projection_drop: 0.1
-    drop_path_rate: 0.3
+    dropout: 0.0
+    attention_drop: 0.0
+    projection_drop: 0.0
+    drop_path_rate: 0.1
     qkv_bias: True
-    layerscale_eps : 0.005 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
-    class_token_dropout : 0.5 #0.3 gave the best result in caltech256 subset test - 0 means disabling the impact
+    layerscale_eps : 0.05 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
+    class_token_dropout : 0.3 #0.3 gave the best result in caltech256 subset test - 0 means disabling the impact
 
 training:
   mixup:
