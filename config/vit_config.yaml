@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
-run : "vittinyv3_tinyimagenet200_testV0"
-run_notes : "test" 
-wandb_tags : ["ViT", "TINYIMAGENET200", "custom model"]
+run : "vittinyv3_tinyimagenet200_runV8"
+run_notes : "acc inproved slightly. but overfitting. reducing mixup, inc drop path." 
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout"]
 
 data:
   CIFAR10:
@@ -72,36 +72,42 @@ model:
   VIT_TINYV3:
     name: 'vit_tiny_v3'
     patch_size: 8
-    emb_size: 192
+    emb_size: 384
     depth: 12
     num_heads: 6
     mlp_ratio: 4.0 
-    dropout: 0.0
-    attn_drop_rate: 0.0
-    drop_path_rate: 0.1
+    dropout: 0.1
+    attention_drop: 0.1
+    projection_drop: 0.1
+    drop_path_rate: 0.2
     qkv_bias: True
+    layerscale_eps : 0.01 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
+    class_token_dropout : 0.5 #0.3 gave the best result in caltech256 subset test - 0 means disabling the impact
 
-  # tiny - using custom attention but shallow model
+  # tiny - custom attention - for deeper training
   VIT_TINYV4:
     name: 'vit_tiny_v4'
     patch_size: 16
-    emb_size: 192
-    depth: 8
-    num_heads: 3
+    emb_size: 384
+    depth: 12
+    num_heads: 6
     mlp_ratio: 4.0 
-    dropout: 0.0
-    attn_drop_rate: 0.0
-    drop_path_rate: 0.1
+    dropout: 0.1
+    attention_drop: 0.1
+    projection_drop: 0.1
+    drop_path_rate: 0.3
     qkv_bias: True
+    layerscale_eps : 0.005 #0.1 gave the best result in caltech256 subset - 1 means disabling the impact
+    class_token_dropout : 0.5 #0.3 gave the best result in caltech256 subset test - 0 means disabling the impact
 
 training:
   mixup:
     enabled: true
     mixup_alpha: 0.1
     cutmix_alpha: 0.6
-    label_smoothing_mixup: 0.1
+    label_smoothing_mixup: 0.2
   epochs: 200
-  lr: 0.0003
+  lr: 0.001
   weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
@@ -112,32 +118,32 @@ training:
   es_improv_delta : 0.001
   augmentation_enabled : true
   apply_class_balance : true
-  num_subset_class : 10
-  num_subset_sample : 50
+  num_subset_class : 200
+  num_subset_sample : 200
   batch_size : 128
-  image_size : 64
+  image_size : 224
 
 training_dummy:
   mixup:
-    enabled: true
-    mixup_alpha: 0.1
-    cutmix_alpha: 0.6
-    label_smoothing_mixup: 0.1
-  epochs: 200
+    enabled: false
+    mixup_alpha: 0.0
+    cutmix_alpha: 0.0
+    label_smoothing_mixup: 0.0
+  epochs: 50
   lr: 0.0003
-  weight_decay: 0.01 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.0 # 0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler_warmup : true
   warmup_steps : 30
   label_smoothing_enabled : false
   label_smoothing : 0.0 # increase to reduce overfitting
   es_patience : 30
   es_improv_delta : 0.001
-  augmentation_enabled : true
+  augmentation_enabled : false
   apply_class_balance : true
   num_subset_class : 10
-  num_subset_sample : 60
-  batch_size : 64
-  image_size : 224
+  num_subset_sample : 80
+  batch_size : 128
+  image_size : 64
 
 ## ********* RESOURCES ***********
 

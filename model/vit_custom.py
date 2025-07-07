@@ -25,7 +25,7 @@ class PatchEmbedding(nn.Module):
 # building custom attention instead of using the existing multiheadattention method in torch
 class Attention(nn.Module):
 
-    def __init__(self, dim, num_heads, qkv_bias=True, attn_drop=0., proj_drop=0.):
+    def __init__(self, attn_drop, proj_drop, dim, num_heads, qkv_bias=True):
         super().__init__()
         self.num_heads = num_heads
         self.head_dim = dim // num_heads
@@ -34,9 +34,9 @@ class Attention(nn.Module):
         self.scale = self.head_dim ** -0.5  # Scaling factor: 1/sqrt(dk)
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)  # Fused Q, K, V
-        self.attn_drop = nn.Dropout(attn_drop)
+        self.attn_drop = nn.Dropout(attn_drop) # attn_drop=0.0 default
         self.projection = nn.Linear(dim, dim)  # Final projection
-        self.proj_drop = nn.Dropout(proj_drop)
+        self.proj_drop = nn.Dropout(proj_drop) # proj_drop = 0.0 default
 
     def forward(self, x):
 
@@ -83,10 +83,10 @@ class DropPath(nn.Module):
 
 
 class TransformerEncoderBlock(nn.Module):
-    def __init__(self, emb_size, num_heads, mlp_ratio, dropout, drop_path_rate, layerscale_eps=0.1):
+    def __init__(self, emb_size, num_heads, attention_drop, projection_drop, mlp_ratio, dropout, drop_path_rate, layerscale_eps):
         super().__init__()
         self.ln1 = nn.LayerNorm(emb_size)
-        self.attn = Attention(dim=emb_size, num_heads=num_heads)
+        self.attn = Attention(attn_drop=attention_drop, proj_drop= projection_drop, dim=emb_size, num_heads=num_heads)
         self.drop_path1 = DropPath(drop_path_rate)
         self.gamma1 = nn.Parameter(torch.ones(emb_size) * layerscale_eps)
         self.ln2 = nn.LayerNorm(emb_size)
@@ -112,13 +112,16 @@ class VisionTransformerTiny(nn.Module):
                     EMBEDDING,
                     IMAGE,
                     NUM_HEADS,
+                    ATTENTION_DROP,
+                    PROJECTION_DROP,
                     MLP_RATIO,
                     DROPOUT,
                     NUM_CLASSES,
                     DEPTH,
                     QKV_BIAS,
-                    ATTN_DROP_RATE,
-                    DROP_PATH_RATE
+                    DROP_PATH_RATE,
+                    LAYERSCALE_EPS,
+                    CLASS_TOKEN_DROPOUT
                 ):
         args = locals()
         _ = args.pop('self')
@@ -131,13 +134,16 @@ class VisionTransformerTiny(nn.Module):
         self.embed_dim = EMBEDDING
         self.img_size = IMAGE
         self.num_heads = NUM_HEADS
+        self.attention_drop = ATTENTION_DROP
+        self.projection_drop = PROJECTION_DROP
         self.mlp_ratio = MLP_RATIO
         self.dropout = DROPOUT
         self.num_classes = NUM_CLASSES
         self.depth = DEPTH
         self.qkv_bias = QKV_BIAS
-        self.attn_drop_rate = ATTN_DROP_RATE
         self.drop_path_rate = DROP_PATH_RATE
+        self.layerscale_eps = LAYERSCALE_EPS
+        self.class_token_dropout = CLASS_TOKEN_DROPOUT
         self.patch_embed = PatchEmbedding(
             img_size=IMAGE,
             patch_size=PATCH,
@@ -147,7 +153,7 @@ class VisionTransformerTiny(nn.Module):
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
-        self.cls_token_dropout = nn.Dropout(p=0.3)
+        self.cls_token_dropout = nn.Dropout(p=self.class_token_dropout)
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches + 1, self.embed_dim))
         self.pos_drop = nn.Dropout(p=self.dropout)
 
@@ -157,9 +163,12 @@ class VisionTransformerTiny(nn.Module):
             TransformerEncoderBlock(
                 emb_size=self.embed_dim,
                 num_heads=self.num_heads,
+                attention_drop = self.attention_drop,
+                projection_drop = self.projection_drop,
                 mlp_ratio=self.mlp_ratio,
                 dropout=self.dropout,
-                drop_path_rate=dpr[i]
+                drop_path_rate=dpr[i],
+                layerscale_eps=self.layerscale_eps
             )
             for i in range(self.depth)
         ])
