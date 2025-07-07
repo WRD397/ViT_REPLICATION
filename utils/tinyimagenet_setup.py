@@ -67,6 +67,7 @@ def rearrange_val_folder(val_dir):
     os.remove(val_annotations_file)
 
 def prepare_tiny_imagenet():
+    print('-----------')
     dst_dir = DESTINATION_PATH
     zip_fname = f"{DESTINATION_PATH}{ZIP_NAME}"
 
@@ -83,6 +84,12 @@ def prepare_tiny_imagenet():
         rearrange_val_folder(val_dir=f'{DESTINATION_PATH}tiny-imagenet-200/val')
         print(f"TinyImageNet is ready under: {dst_dir}")
     else : print(f'TinyImageNet already exists under: {dst_dir}')
+    print('*** Data sanity check')
+    train_path = f'{DESTINATION_PATH}tiny-imagenet-200/train'
+    val_path = f'{DESTINATION_PATH}tiny-imagenet-200/val'
+    count_folders_and_files(train_path)
+    count_folders_and_files(val_path)
+    print('-----------')
 
 def count_folders_and_files(root_dir):
     class_folders = [d for d in os.listdir(root_dir)
