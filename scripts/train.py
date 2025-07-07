@@ -138,7 +138,7 @@ def main():
     # *************  choosing the DATASET & MODEL *************
     
     dataset_config = config["data"]['TINYIMAGENET200']
-    specific_config = config["model"]['VIT_TINYV3']
+    specific_config = config["model"]['VIT_TINYV4']
     trainingConfig = config['training']
 
     # *********************************************************
@@ -174,13 +174,16 @@ def main():
         'EMBEDDING' : specific_config['emb_size'],
         'IMAGE' : IMAGE,
         'NUM_HEADS' : specific_config['num_heads'],
+        'ATTENTION_DROP': specific_config['attention_drop'],
+        'PROJECTION_DROP': specific_config['projection_drop'],
         'MLP_RATIO' : specific_config['mlp_ratio'],
         'DROPOUT' : specific_config['dropout'],
         'NUM_CLASSES' : NUM_CLASSES,
         'DEPTH' : specific_config['depth'],
         'QKV_BIAS':specific_config['qkv_bias'],
-        'ATTN_DROP_RATE': specific_config['attn_drop_rate'],
-        'DROP_PATH_RATE': specific_config['drop_path_rate']
+        'DROP_PATH_RATE': specific_config['drop_path_rate'],
+        'LAYERSCALE_EPS': specific_config['layerscale_eps'],
+        'CLASS_TOKEN_DROPOUT': specific_config['class_token_dropout']
     }    
 
     # mixup config
@@ -230,11 +233,17 @@ def main():
     for images, labels in train_loader:
         print(f'image shape and labels shape in training data - one batch : {images.shape}, {labels.shape}')
         break
-    
+    targets = [label for _, label in train_loader.dataset]
+    targets_tensor = torch.tensor(targets)
+
+    print(f"target min : {targets_tensor.min()}, target max : {targets_tensor.max()}, target shape : {targets_tensor.shape}")
+    print(f"sample targets : {sorted(set(targets))[:10]}")
+
     # loading model
     #model = VisionTransformerSmall(**modelConfigDict).to(device)
     model = VisionTransformerTiny(**modelConfigDict).to(device)
     # logging model parameters and config
+    print(f'model head: {model.head}')
     print('Data Configuration:')
     for k, v in dataset_config.items():
         print(f"  {k}: {v}")
@@ -286,7 +295,10 @@ def main():
         "mlp_ratio": specific_config["mlp_ratio"],
         "dropout":specific_config["dropout"],
         "drop_path_rate":specific_config["drop_path_rate"],
-        "attn_drop_rate": specific_config['attn_drop_rate'],
+        "attn_drop_rate": specific_config['attention_drop'],
+        "projection_drop": specific_config['attention_drop'],
+        "layerscale_eps": specific_config['layerscale_eps'],
+        "class_token_dropout": specific_config['class_token_dropout'],
 
         "epochs": config["training"]["epochs"],
         "lr": config["training"]["lr"],
