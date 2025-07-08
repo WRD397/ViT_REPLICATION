@@ -1,6 +1,6 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_tinyimagenet200_runV10"
-run_notes : "slight overfitting. but still low accuracy, removed RandAug.incorporated INPUT LAYERNORM BEFORE PATCH EMBEDDING. memory issue -  dec patch size to 8 from 16, had to reduce batch to 64, emb to 192, sample size to 100." 
+run_notes : "slight overfitting. but still low accuracy, removed RandAug.incorporated INPUT LAYERNORM BEFORE PATCH EMBEDDING. memory issue - had to reduce batch to 64, sample size to 100." 
 wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout", "input layernorm"]
 
 data:
@@ -87,10 +87,10 @@ model:
   # tiny - custom attention - for deeper training
   VIT_TINYV4:
     name: 'vit_tiny_v4'
-    patch_size: 8
-    emb_size: 192
+    patch_size: 16
+    emb_size: 384
     depth: 12
-    num_heads: 4
+    num_heads: 6
     mlp_ratio: 4.0 
     dropout: 0.0
     attention_drop: 0.0
