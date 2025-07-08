@@ -189,7 +189,7 @@ class DatasetLoader:
                 transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.9, 1.1)),
-                transforms.RandAugment(num_ops=2, magnitude=9),
+                #transforms.RandAugment(num_ops=2, magnitude=9),
                 transforms.ToTensor(),
                 transforms.Normalize(mean_tinyimg, std_tinyimg),
                 transforms.RandomErasing(p=0.25, scale=(0.02, 0.2), ratio=(0.3, 3.3), value='random')
