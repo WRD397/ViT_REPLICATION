@@ -1,7 +1,7 @@
 project : "VIT_EXPLORATION"
 run : "vittinyv3_tinyimagenet200_runV10"
-run_notes : "slight overfitting. but still low accuracy, dec patch size to 8 from 16. incorporated INPUT LAYERNORM BEFORE PATCH EMBEDDING." 
-wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout", "input layer norm incorporated"]
+run_notes : "slight overfitting. but still low accuracy, removed RandAug.incorporated INPUT LAYERNORM BEFORE PATCH EMBEDDING. memory issue -  dec patch size to 8 from 16, had to reduce batch to 64, emb to 192, sample size to 100." 
+wandb_tags : ["ViT", "TINYIMAGENET200", "custom model", "layerscale_eps", "class_token_dropout", "input layernorm"]
 
 data:
   CIFAR10:
@@ -104,11 +104,11 @@ training:
   mixup:
     enabled: true
     mixup_alpha: 0.1
-    cutmix_alpha: 0.6
+    cutmix_alpha: 0.4
     label_smoothing_mixup: 0.2
   epochs: 200
   lr: 0.0003
-  weight_decay: 0.03  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
+  weight_decay: 0.05  #0.1 is used in original paper. 0.1 is very high decay - used to control overfit.
   scheduler : false
   scheduler_warmup : true
   warmup_steps : 30
@@ -119,7 +119,7 @@ training:
   augmentation_enabled : true
   apply_class_balance : true
   num_subset_class : 200
-  num_subset_sample : 150
+  num_subset_sample : 100
   batch_size : 64
   image_size : 224
 
