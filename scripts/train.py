@@ -49,8 +49,8 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device,
             inputs, targets = mixup_fn(inputs, targets)
 
         if targets.ndim == 2:
-            targets = targets.type_as(inputs)
-
+            #targets = targets.type_as(inputs)
+            targets = targets.float() # as BCE prefers float32, but autocast results float16
         optimizer.zero_grad()
         with autocast(device_type='cuda'):
             outputs = model(inputs)
