@@ -144,7 +144,7 @@ class VisionTransformerTiny(nn.Module):
         self.drop_path_rate = DROP_PATH_RATE
         self.layerscale_eps = LAYERSCALE_EPS
         self.class_token_dropout = CLASS_TOKEN_DROPOUT
-        self.input_norm = nn.LayerNorm([CHANNEL, IMAGE, IMAGE])
+        # self.input_norm = nn.LayerNorm([CHANNEL, IMAGE, IMAGE])
         self.patch_embed = PatchEmbedding(
             img_size=IMAGE,
             patch_size=PATCH,
@@ -201,7 +201,7 @@ class VisionTransformerTiny(nn.Module):
 
     def forward_features(self, x):
         B = x.shape[0]
-        x = self.input_norm(x)
+        # x = self.input_norm(x)
         x = self.patch_embed(x)  # (B, N, C)
 
         cls_tokens = self.cls_token.expand(B, -1, -1)  # (B, 1, C)
